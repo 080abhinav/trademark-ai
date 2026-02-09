@@ -1,0 +1,97 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+.eggs/
+*.egg
+
+# Virtual Environments
+backend/venv/
+backend/env/
+backend/.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Data files (large PDFs and generated reports)
+data/
+*.pdf
+analysis/reports/*.json
+
+# Vector database (can be regenerated)
+backend/app/data/vectors/
+
+# Ollama models (too large, users download themselves)
+*.gguf
+
+# Logs
+*.log
+logs/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Frontend (covered by frontend/.gitignore but listing key ones)
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+
+# Python testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build artifacts
+build/
+dist/
+
+# Secrets
+*.pem
+*.key
+secrets.json
+
+# Large data files
+*.xlsx
+*.xls
+*.csv
+*.zip
+*.tar.gz
+
+# Keep structure folders but ignore contents
+backend/app/data/tmep/*.json
+backend/app/data/tmep_official/*.json
+
+# Keep these important files (whitelist)
+!README.md
+!requirements.txt
+!package.json
+!methodology.md
+!ARCHITECTURE.md
+!RISK_ASSESSMENT_REPORT.md
+!PRESENTATION.md
