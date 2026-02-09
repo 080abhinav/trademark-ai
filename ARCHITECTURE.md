@@ -500,23 +500,3 @@ async def analyze_trademark(request: TrademarkRequest):
 
 ---
 
-## Future Improvements
-
-### Short-Term
-1. **Async LLM calls** - Parallel processing (4x speedup)
-2. **Response caching** - Redis for duplicate queries
-3. **PDF export** - Generate printable reports
-
-### Medium-Term
-1. **Fine-tuned model** - Domain-specific LLM
-2. **Batch processing** - Analyze multiple marks
-3. **Historical tracking** - Store past analyses
-
-### Long-Term
-1. **USPTO API integration** - Live status updates
-2. **Predictive analytics** - Success probability ML
-3. **International support** - WIPO, EU trademarks
-
----
-
-*Last Updated: February 8, 2026*
