@@ -60,7 +60,7 @@ This system provides **comprehensive risk assessment** for trademark application
 #### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/trademark-ai.git
+git clone https://github.com/080abhinav/trademark-ai.git
 cd trademark-ai
 ```
 
@@ -380,7 +380,7 @@ curl http://localhost:8000/api/health
 ### Getting Help
 
 If you encounter issues:
-1. Check the [Issues](https://github.com/yourusername/trademark-ai/issues) page
+1. Check the [Issues](https://github.com/080abhinav/trademark-ai/issues) page
 2. Review logs in terminal where backend is running
 3. Check browser console (F12) for frontend errors
 4. Verify all system requirements are met
@@ -479,12 +479,3 @@ python test_system.py
 - **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - System design
 - **[API Docs](http://localhost:8000/docs)** - Interactive API reference
 
----
-
-## 📄 License
-
-MIT License - See LICENSE file
-
----
-
-*Legal Tech Engineer Challenge | February 2026*
