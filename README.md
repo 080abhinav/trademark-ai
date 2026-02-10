@@ -477,5 +477,5 @@ python test_system.py
 
 - **[methodology.md](docs/methodology.md)** - Risk framework details
 - **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - System design
-- **[Report](docs/RISK_ASSESSMENT_REPORT.md)** - Risk Assessment Report
+- **[Report](https://github.com/080abhinav/trademark-ai/blob/main/RISK_ASSESSMENT_REPORT.md)** - Risk Assessment Report
 
