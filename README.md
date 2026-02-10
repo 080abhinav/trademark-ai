@@ -380,10 +380,9 @@ curl http://localhost:8000/api/health
 ### Getting Help
 
 If you encounter issues:
-1. Check the [Issues](https://github.com/080abhinav/trademark-ai/issues) page
-2. Review logs in terminal where backend is running
-3. Check browser console (F12) for frontend errors
-4. Verify all system requirements are met
+1. Review logs in terminal where backend is running
+2. Check browser console (F12) for frontend errors
+3. Verify all system requirements are met
 
 ---
 
