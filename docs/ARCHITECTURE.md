@@ -11,7 +11,7 @@ The Trademark Risk Assessment System uses a **modular, pipeline-based architectu
 ```
 ┌──────────────┐
 │   Frontend   │ React + Vite
-│  (Port 5173) │ Dark Mode UI
+│  (Port 5173) │ 
 └──────┬───────┘
        │ HTTP/JSON
        ▼
@@ -84,11 +84,11 @@ The Trademark Risk Assessment System uses a **modular, pipeline-based architectu
 - Vite (dev server + build tool)
 - Axios (HTTP client)
 - Recharts (risk visualization)
-- Custom CSS (dark mode)
+- Custom CSS 
 
 **Key Files:**
 - `App.jsx` - Main application logic
-- `index.css` - Dark mode styling
+- `index.css` - Light mode styling
 - `main.jsx` - Entry point
 
 **State Management:**
