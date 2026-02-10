@@ -477,5 +477,5 @@ python test_system.py
 
 - **[methodology.md](docs/methodology.md)** - Risk framework details
 - **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - System design
-- **[API Docs](http://localhost:8000/docs)** - Interactive API reference
+- **[Report](docs/RISK_ASSESSMENT_REPORT.md)** - Risk Assessment Report
 
