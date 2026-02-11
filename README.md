@@ -386,38 +386,6 @@ If you encounter issues:
 
 ---
 
-## 📦 Production Deployment
-
-### Environment Variables
-
-Create `.env` file in backend directory:
-```bash
-OLLAMA_HOST=localhost
-OLLAMA_PORT=11434
-API_PORT=8000
-CORS_ORIGINS=http://localhost:5173
-```
-
-### Docker Deployment (Optional)
-
-```bash
-# Build backend image
-docker build -t trademark-ai-backend ./backend
-
-# Run container
-docker run -p 8000:8000 trademark-ai-backend
-```
-
-### Cloud Deployment Recommendations
-
-**Backend:** Railway, Render, or AWS EC2  
-- Requires: 2 CPU cores, 8GB RAM minimum (16GB recommended)
-- Storage: 10GB for models and data
-
-**Frontend:** Vercel, Netlify, or Cloudflare Pages  
-- Static site, minimal resources needed
-
----
 
 ## 🔒 Security Notes
 
