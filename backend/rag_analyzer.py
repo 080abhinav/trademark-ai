@@ -204,7 +204,8 @@ CITATIONS_USED: [List section numbers you cited, e.g., 1207, 1209]
                 json={
                     "model": self.model_name,
                     "prompt": prompt,
-                    "temperature": temperature,
+                    "temperature": 0,
+                    "seed":42,
                     "stream": False
                 },
                 timeout=60
