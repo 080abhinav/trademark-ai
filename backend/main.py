@@ -101,6 +101,17 @@ class AnalysisResponse(BaseModel):
     trademark: str
     goods_services: str
 
+class PdfAnalysisResponse(AnalysisResponse):
+    """Analysis response from PDF upload — includes parsed PDF metadata"""
+    input_mode: str = "pdf"
+    parsed_mark: str
+    parsed_goods_services: str
+    parsed_classes: List[int]
+    parsed_prior_marks_count: int
+    parsed_prior_marks_uspto: List[Dict]
+    total_pdf_conflicts: int
+    report_date: Optional[str] = None
+
 # API Endpoints
 
 @app.get("/")
@@ -333,6 +344,217 @@ async def upload_report(file: UploadFile = File(...)):
             "total_conflicts": parsed_report.total_conflicts,
             "report_date": parsed_report.report_date
         }
+        
+        return response
+    
+    finally:
+        # Clean up temp file
+        os.unlink(temp_path)
+
+@app.post("/api/analyze-pdf", response_model=PdfAnalysisResponse)
+async def analyze_pdf(file: UploadFile = File(...)):
+    """
+    Upload a PDF trademark report and run FULL analysis on it.
+    
+    This endpoint:
+    1. Parses the PDF with DocumentParser to extract mark, goods/services, classes, prior marks
+    2. Runs the same RAG + risk analysis pipeline as /api/analyze
+    3. Returns analysis results PLUS the parsed PDF metadata
+    """
+    
+    if not file.filename.endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported")
+    
+    # Save uploaded file temporarily
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+        content = await file.read()
+        temp_file.write(content)
+        temp_path = temp_file.name
+    
+    try:
+        # Step 1: Parse the PDF
+        print(f"📄 Parsing uploaded PDF: {file.filename}")
+        parsed_report = document_parser.parse_pdf_report(temp_path)
+        
+        # Extract data from parsed report
+        mark = parsed_report.application.mark
+        goods_services = (
+            parsed_report.application.goods_services[0] 
+            if parsed_report.application.goods_services 
+            else "General goods and services"
+        )
+        classes = parsed_report.application.classes or [0]
+        
+        # Build prior marks list from parsed USPTO marks
+        prior_marks = [
+            {
+                "name": m.mark,
+                "registration": m.registration_number or "",
+                "similarity": m.similarity_score
+            }
+            for m in parsed_report.prior_marks_uspto
+        ]
+        
+        print(f"   📋 Extracted mark: {mark}")
+        print(f"   📋 Goods/Services: {goods_services}")
+        print(f"   📋 Classes: {classes}")
+        print(f"   📋 Prior marks found: {len(prior_marks)}")
+        
+        # Step 2: Run RAG analysis (same as /api/analyze)
+        print(f"   🔍 Running RAG analysis on parsed data...")
+        
+        issues_to_check = [
+            "likelihood of confusion with similar marks",
+            "descriptiveness or genericness",
+            "specimen and identification requirements",
+            "filing basis and ownership issues"
+        ]
+        
+        rag_results = await rag_analyzer.analyze_multiple_issues_parallel(
+            trademark=mark,
+            goods_services=goods_services,
+            issue_types=issues_to_check
+        )
+        
+        # Step 3: Convert RAG results to TrademarkIssues
+        print("   📊 Converting to structured issues...")
+        
+        trademark_issues = []
+        
+        for issue_type, rag_result in rag_results.items():
+            category = IssueCategory.LIKELIHOOD_CONFUSION
+            severity = RiskLevel.MODERATE
+            
+            if "confusion" in issue_type.lower():
+                category = IssueCategory.LIKELIHOOD_CONFUSION
+                severity = RiskLevel.HIGH if rag_result.confidence > 0.7 else RiskLevel.MODERATE
+            elif "descriptive" in issue_type.lower():
+                category = IssueCategory.DESCRIPTIVENESS
+                severity = RiskLevel.MODERATE if rag_result.confidence > 0.6 else RiskLevel.LOW
+            elif "specimen" in issue_type.lower():
+                category = IssueCategory.SPECIMEN_DEFICIENCY
+                severity = RiskLevel.LOW
+            elif "ownership" in issue_type.lower():
+                category = IssueCategory.OWNERSHIP_ISSUE
+                severity = RiskLevel.MODERATE
+            
+            primary_citation = rag_result.citations_used[0] if rag_result.citations_used else "TMEP §1207"
+            
+            citation_text = ""
+            if rag_result.retrieved_sections:
+                citation_text = rag_result.retrieved_sections[0].content[:200] + "..."
+            
+            issue = TrademarkIssue(
+                category=category,
+                severity=severity,
+                title=issue_type.title(),
+                description=rag_result.analysis[:300],
+                tmep_section=primary_citation.replace("TMEP §", ""),
+                citation_text=citation_text,
+                recommendation="Review analysis and consider attorney consultation" if rag_result.requires_human_review else "Standard prosecution recommended",
+                confidence=rag_result.confidence,
+                estimated_cost=_estimate_cost(severity),
+                estimated_time=_estimate_time(severity)
+            )
+            
+            trademark_issues.append(issue)
+        
+        # Step 4: Calculate risk dimensions
+        print("   🎯 Calculating risk dimensions...")
+        
+        rejection = risk_framework.assess_rejection_likelihood(
+            issues=trademark_issues,
+            similar_marks=prior_marks,
+            tmep_evidence=[{"section": i.tmep_section} for i in trademark_issues]
+        )
+        
+        overcoming = risk_framework.assess_overcoming_difficulty(
+            issues=trademark_issues,
+            estimated_costs={i.category.value: _parse_cost(i.estimated_cost) for i in trademark_issues},
+            estimated_times={i.category.value: _parse_time(i.estimated_time) for i in trademark_issues}
+        )
+        
+        precedent = risk_framework.assess_legal_precedent(
+            tmep_sections=[{"section": i.tmep_section, "category": "substantive"} for i in trademark_issues],
+            case_law=[],
+            third_party_registrations=[]
+        )
+        
+        discretion = risk_framework.assess_examiner_discretion(
+            issues=trademark_issues,
+            subjective_elements=["commercial impression", "suggestiveness"]
+        )
+        
+        # Step 5: Calculate overall risk
+        print("   📈 Calculating overall risk...")
+        
+        dimensions = {
+            "rejection_likelihood": rejection,
+            "overcoming_difficulty": overcoming,
+            "legal_precedent": precedent,
+            "examiner_discretion": discretion
+        }
+        
+        overall_score, overall_confidence = risk_framework.calculate_overall_score(dimensions)
+        overall_level = risk_framework.determine_risk_level(overall_score)
+        needs_review = risk_framework.requires_human_review(overall_confidence)
+        
+        # Step 6: Generate recommendations
+        print("   💡 Generating recommendations...")
+        
+        primary_rec, alt_strategies = risk_framework.generate_recommendations(
+            overall_level, trademark_issues, dimensions
+        )
+        
+        # Step 7: Build response with PDF metadata
+        print("   ✅ Building response...")
+        
+        # Prepare prior marks for response
+        prior_marks_response = [
+            {
+                "mark": m.mark,
+                "registration": m.registration_number,
+                "status": m.status,
+                "similarity": m.similarity_score
+            }
+            for m in parsed_report.prior_marks_uspto
+        ]
+        
+        response = PdfAnalysisResponse(
+            overall_risk_score=overall_score,
+            overall_risk_level=overall_level.value,
+            overall_confidence=overall_confidence,
+            requires_human_review=needs_review,
+            
+            rejection_likelihood=_dim_to_response(rejection),
+            overcoming_difficulty=_dim_to_response(overcoming),
+            legal_precedent_strength=_dim_to_response(precedent),
+            examiner_discretion=_dim_to_response(discretion),
+            
+            issues=[_issue_to_response(i) for i in trademark_issues],
+            total_issues=len(trademark_issues),
+            critical_issues=sum(1 for i in trademark_issues if i.severity == RiskLevel.CRITICAL),
+            
+            primary_recommendation=primary_rec,
+            alternative_strategies=alt_strategies,
+            estimated_total_cost=_calculate_total_cost(trademark_issues),
+            estimated_timeline=_calculate_total_timeline(trademark_issues),
+            
+            trademark=mark,
+            goods_services=goods_services,
+            
+            # PDF-specific fields
+            input_mode="pdf",
+            parsed_mark=mark,
+            parsed_goods_services=goods_services,
+            parsed_classes=classes,
+            parsed_prior_marks_count=parsed_report.total_conflicts,
+            parsed_prior_marks_uspto=prior_marks_response,
+            total_pdf_conflicts=parsed_report.total_conflicts,
+            report_date=parsed_report.report_date
+        )
+        
+        print(f"   🎉 PDF analysis complete! Risk: {overall_level.value}")
         
         return response
     

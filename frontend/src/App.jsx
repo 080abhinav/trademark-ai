@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import axios from 'axios';
 
 const API_URL = 'http://localhost:8000';
 
 function App() {
+  // Input mode: 'form' or 'pdf'
+  const [inputMode, setInputMode] = useState('form');
+  
   const [formData, setFormData] = useState({
     mark: 'TEAR, POUR, LIVE MORE',
     goods_services: 'Energy drinks, sports drinks, dietary supplements',
@@ -11,27 +14,30 @@ function App() {
     prior_marks: 'LIVEMORE, 5234567\nPOURMORE, 6123456'
   });
   
+  // PDF upload state
+  const [pdfFile, setPdfFile] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef(null);
+  
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const handleSubmit = async (e) => {
+  // --- Form submission (existing) ---
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
     e.stopPropagation();
     
-    console.log('Form submitted!'); // Debug
     setLoading(true);
     setError(null);
-    setAnalysis(null); // Clear previous results
+    setAnalysis(null);
 
     try {
-      // Parse classes
       const classes = formData.classes
         .split(',')
         .map(c => parseInt(c.trim()))
         .filter(c => !isNaN(c));
 
-      // Parse prior marks
       const prior_marks = formData.prior_marks.trim() 
         ? formData.prior_marks.split('\n').map(line => {
             const parts = line.split(',').map(s => s.trim());
@@ -42,25 +48,19 @@ function App() {
           }).filter(m => m.name)
         : [];
 
-      console.log('Sending request...', { mark: formData.mark, classes, prior_marks }); // Debug
-
       const response = await axios.post(`${API_URL}/api/analyze`, {
         mark: formData.mark,
         goods_services: formData.goods_services,
         classes,
         prior_marks
       }, {
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        timeout: 120000 // 2 minutes timeout
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 120000
       });
 
-      console.log('Response received:', response.data); // Debug
       setAnalysis(response.data);
       
     } catch (err) {
-      console.error('Error:', err); // Debug
       const errorMsg = err.response?.data?.detail 
         || err.message 
         || 'Failed to analyze trademark. Please check if the backend is running.';
@@ -70,6 +70,76 @@ function App() {
     }
   };
 
+  // --- PDF upload & analysis ---
+  const handlePdfSubmit = async () => {
+    if (!pdfFile) {
+      setError('Please select a PDF file first.');
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    setAnalysis(null);
+
+    try {
+      const formPayload = new FormData();
+      formPayload.append('file', pdfFile);
+
+      const response = await axios.post(`${API_URL}/api/analyze-pdf`, formPayload, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 180000 // 3 minutes for large PDFs
+      });
+
+      setAnalysis(response.data);
+      
+    } catch (err) {
+      const errorMsg = err.response?.data?.detail 
+        || err.message 
+        || 'Failed to analyze PDF. Please check if the backend is running.';
+      setError(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- Drag & drop handlers ---
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file && file.type === 'application/pdf') {
+      setPdfFile(file);
+      setError(null);
+    } else {
+      setError('Please drop a valid PDF file.');
+    }
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPdfFile(file);
+      setError(null);
+    }
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  // --- Helpers ---
   const getRiskColor = (level) => {
     const colors = {
       critical: 'risk-critical',
@@ -103,62 +173,143 @@ function App() {
       </div>
 
       <main className="container">
-        {/* Input Form */}
+        {/* Input Card */}
         <div className="card">
           <h2 style={{ fontSize: '20px', marginBottom: '20px' }}>Trademark Application Details</h2>
-          <form onSubmit={handleSubmit}>
-            <div className="grid grid-2">
-              <div>
-                <label>Trademark</label>
-                <input
-                  type="text"
-                  value={formData.mark}
-                  onChange={(e) => setFormData({ ...formData, mark: e.target.value })}
-                  required
-                />
-              </div>
-              
-              <div>
-                <label>Classes (comma-separated)</label>
-                <input
-                  type="text"
-                  value={formData.classes}
-                  onChange={(e) => setFormData({ ...formData, classes: e.target.value })}
-                  placeholder="e.g., 5, 32"
-                  required
-                />
-              </div>
-            </div>
-
-            <div style={{ marginTop: '16px' }}>
-              <label>Goods/Services</label>
-              <textarea
-                value={formData.goods_services}
-                onChange={(e) => setFormData({ ...formData, goods_services: e.target.value })}
-                rows="2"
-                required
-              />
-            </div>
-
-            <div style={{ marginTop: '16px' }}>
-              <label>Prior Marks (optional, one per line: NAME, REGISTRATION)</label>
-              <textarea
-                value={formData.prior_marks}
-                onChange={(e) => setFormData({ ...formData, prior_marks: e.target.value })}
-                rows="3"
-                placeholder="LIVEMORE, 5234567&#10;POURMORE, 6123456"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="btn-primary"
-              disabled={loading}
-              style={{ marginTop: '20px' }}
+          
+          {/* ====== INPUT MODE TOGGLE ====== */}
+          <div className="input-mode-toggle">
+            <button 
+              className={`toggle-btn ${inputMode === 'form' ? 'active' : ''}`}
+              onClick={() => setInputMode('form')}
+              type="button"
             >
-              {loading ? 'Analyzing...' : 'Analyze Trademark'}
+              ✏️ Manual Entry
             </button>
-          </form>
+            <button 
+              className={`toggle-btn ${inputMode === 'pdf' ? 'active' : ''}`}
+              onClick={() => setInputMode('pdf')}
+              type="button"
+            >
+              📄 Upload PDF Report
+            </button>
+          </div>
+
+          {/* ====== FORM MODE ====== */}
+          {inputMode === 'form' && (
+            <form onSubmit={handleFormSubmit}>
+              <div className="grid grid-2">
+                <div>
+                  <label>Trademark</label>
+                  <input
+                    type="text"
+                    value={formData.mark}
+                    onChange={(e) => setFormData({ ...formData, mark: e.target.value })}
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label>Classes (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={formData.classes}
+                    onChange={(e) => setFormData({ ...formData, classes: e.target.value })}
+                    placeholder="e.g., 5, 32"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginTop: '16px' }}>
+                <label>Goods/Services</label>
+                <textarea
+                  value={formData.goods_services}
+                  onChange={(e) => setFormData({ ...formData, goods_services: e.target.value })}
+                  rows="2"
+                  required
+                />
+              </div>
+
+              <div style={{ marginTop: '16px' }}>
+                <label>Prior Marks (optional, one per line: NAME, REGISTRATION)</label>
+                <textarea
+                  value={formData.prior_marks}
+                  onChange={(e) => setFormData({ ...formData, prior_marks: e.target.value })}
+                  rows="3"
+                  placeholder="LIVEMORE, 5234567&#10;POURMORE, 6123456"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={loading}
+                style={{ marginTop: '20px' }}
+              >
+                {loading ? 'Analyzing...' : 'Analyze Trademark'}
+              </button>
+            </form>
+          )}
+
+          {/* ====== PDF UPLOAD MODE ====== */}
+          {inputMode === 'pdf' && (
+            <div>
+              {/* Drop zone */}
+              <div 
+                className={`upload-zone ${isDragging ? 'dragging' : ''} ${pdfFile ? 'has-file' : ''}`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleFileSelect}
+                  style={{ display: 'none' }}
+                />
+                
+                {pdfFile ? (
+                  <div className="file-preview">
+                    <div className="file-icon">📄</div>
+                    <div className="file-info">
+                      <p className="file-name">{pdfFile.name}</p>
+                      <p className="file-size">{formatFileSize(pdfFile.size)}</p>
+                    </div>
+                    <button 
+                      className="file-remove"
+                      onClick={(e) => { e.stopPropagation(); setPdfFile(null); }}
+                      type="button"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <div className="upload-placeholder">
+                    <div className="upload-icon">📁</div>
+                    <p className="upload-text">
+                      <strong>Drop your PDF report here</strong> or click to browse
+                    </p>
+                    <p className="upload-hint">
+                      Supports CompuMark reports, USPTO TESS reports, and similar trademark search documents
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={loading || !pdfFile}
+                style={{ marginTop: '20px' }}
+                onClick={handlePdfSubmit}
+              >
+                {loading ? 'Analyzing PDF...' : 'Analyze PDF Report'}
+              </button>
+            </div>
+          )}
 
           {error && (
             <div className="error" style={{ marginTop: '16px' }}>
@@ -170,10 +321,69 @@ function App() {
         {/* Loading State */}
         {loading && (
           <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
-            <h3>🔍 Analyzing Trademark...</h3>
+            <h3>🔍 {inputMode === 'pdf' ? 'Parsing & Analyzing PDF...' : 'Analyzing Trademark...'}</h3>
             <p style={{ color: '#6b7280', marginTop: '8px' }}>
-              This may take 30-60 seconds. Please wait...
+              {inputMode === 'pdf' 
+                ? 'Extracting data from PDF and running analysis. This may take 1-2 minutes for large reports...'
+                : 'This may take 30-60 seconds. Please wait...'
+              }
             </p>
+          </div>
+        )}
+
+        {/* ====== PARSED PDF PREVIEW (shown when PDF analysis completes) ====== */}
+        {analysis && !loading && analysis.input_mode === 'pdf' && (
+          <div className="card parsed-preview">
+            <h3 style={{ fontSize: '16px', marginBottom: '12px', color: '#059669' }}>
+              ✅ Extracted from PDF
+            </h3>
+            <div className="grid grid-2" style={{ gap: '12px' }}>
+              <div className="parsed-item">
+                <span className="parsed-label">Trademark</span>
+                <span className="parsed-value">{analysis.parsed_mark}</span>
+              </div>
+              <div className="parsed-item">
+                <span className="parsed-label">Classes</span>
+                <span className="parsed-value">{(analysis.parsed_classes || []).join(', ') || 'N/A'}</span>
+              </div>
+              <div className="parsed-item">
+                <span className="parsed-label">Goods/Services</span>
+                <span className="parsed-value">{analysis.parsed_goods_services}</span>
+              </div>
+              <div className="parsed-item">
+                <span className="parsed-label">Conflicts Found</span>
+                <span className="parsed-value">{analysis.total_pdf_conflicts} total</span>
+              </div>
+            </div>
+            {analysis.parsed_prior_marks_uspto && analysis.parsed_prior_marks_uspto.length > 0 && (
+              <div style={{ marginTop: '12px' }}>
+                <span className="parsed-label" style={{ marginBottom: '6px', display: 'block' }}>
+                  Prior USPTO Marks ({analysis.parsed_prior_marks_uspto.length})
+                </span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {analysis.parsed_prior_marks_uspto.slice(0, 8).map((m, i) => (
+                    <span 
+                      key={i}
+                      style={{
+                        background: '#f0fdf4',
+                        border: '1px solid #bbf7d0',
+                        borderRadius: '6px',
+                        padding: '4px 10px',
+                        fontSize: '13px',
+                        color: '#166534'
+                      }}
+                    >
+                      {m.mark || 'Unknown'}
+                    </span>
+                  ))}
+                  {analysis.parsed_prior_marks_uspto.length > 8 && (
+                    <span style={{ fontSize: '13px', color: '#6b7280', padding: '4px' }}>
+                      +{analysis.parsed_prior_marks_uspto.length - 8} more
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

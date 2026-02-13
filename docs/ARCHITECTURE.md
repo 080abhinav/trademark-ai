@@ -19,7 +19,8 @@ The Trademark Risk Assessment System uses a **modular, pipeline-based architectu
 │          FastAPI Backend (Port 8000)         │
 │  ┌────────────────────────────────────────┐  │
 │  │      API Layer (main.py)               │  │
-│  │  /api/analyze   /api/upload  /health   │  │
+│  │  /api/analyze  /api/analyze-pdf        │  │
+│  │  /api/upload   /health                 │  │
 │  └────────────┬───────────────────────────┘  │
 │               │                              │
 │  ┌────────────▼───────────────────────────┐  │
@@ -94,10 +95,13 @@ The Trademark Risk Assessment System uses a **modular, pipeline-based architectu
 **State Management:**
 ```javascript
 useState() for:
-- formData (user inputs)
-- analysis (API response)
-- loading (request state)
-- error (error handling)
+- inputMode ('form' | 'pdf')   // Toggle between input modes
+- formData (user inputs)       // Manual form data
+- pdfFile (uploaded file)      // Selected PDF file
+- isDragging (drag state)      // Drag-and-drop visual feedback
+- analysis (API response)      // Analysis results
+- loading (request state)      // Loading indicator
+- error (error handling)       // Error display
 ```
 
 ### 2. API Layer (FastAPI)
@@ -106,14 +110,20 @@ useState() for:
 
 ```python
 POST /api/analyze
-- Input: TrademarkRequest
+- Input: TrademarkRequest (JSON)
 - Output: AnalysisResponse
-- Pipeline: Parse → RAG → Risk → Response
+- Pipeline: Form data → RAG → Risk → Response
+
+POST /api/analyze-pdf
+- Input: PDF file (multipart/form-data)
+- Output: PdfAnalysisResponse (extends AnalysisResponse)
+- Pipeline: PDF → DocumentParser → RAG → Risk → Response
+- Extra fields: parsed_mark, parsed_classes, parsed_prior_marks, etc.
 
 POST /api/upload
 - Input: PDF file (multipart/form-data)
-- Output: ParsedReport
-- Action: Extract prior marks from report
+- Output: ParsedReport (JSON)
+- Action: Extract prior marks from report (parse only, no analysis)
 
 GET /api/health
 - Output: System status
@@ -253,16 +263,26 @@ range_output = f"${total_cost:,}-${int(total_cost * 1.5):,}"
 ### Complete Analysis Pipeline
 
 ```
-1. USER INPUT
+1. USER INPUT (two paths)
+
+   PATH A: Manual Form Entry
    ├─ Mark: "TEAR, POUR, LIVE MORE"
    ├─ Goods: "Energy drinks, sports drinks..."
    ├─ Classes: [5, 32]
    └─ Prior Marks: ["LIVEMORE"]
+   → Calls POST /api/analyze
 
-2. DOCUMENT PARSING (if PDF uploaded)
-   └─ Extract: 50 prior marks (20 common law, 30 domains)
+   PATH B: PDF Report Upload
+   ├─ Upload: CompuMark report (443 pages)
+   └─ DocumentParser extracts mark, goods, classes, prior marks
+   → Calls POST /api/analyze-pdf
 
-3. RAG ANALYSIS (for each issue)
+2. DOCUMENT PARSING (Path B only)
+   ├─ Extract trademark name
+   ├─ Extract goods/services and Nice classes
+   └─ Extract prior marks: 50 found (20 common law, 30 domains)
+
+3. RAG ANALYSIS (same for both paths)
    ├─ Issue: "likelihood of confusion"
    │  ├─ Query Embedding → FAISS Search
    │  ├─ Retrieved: §1207, §1207.01, §1213
@@ -291,7 +311,8 @@ range_output = f"${total_cost:,}-${int(total_cost * 1.5):,}"
    └─ Timeline: "7-10 months"
 
 7. JSON RESPONSE
-   └─ Complete structured output
+   ├─ Path A: AnalysisResponse
+   └─ Path B: PdfAnalysisResponse (includes parsed PDF metadata)
 ```
 
 ---

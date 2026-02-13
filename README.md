@@ -18,6 +18,7 @@ This system provides **comprehensive risk assessment** for trademark application
 ✅ **Multi-Dimensional Risk Scoring** - 4 weighted dimensions  
 ✅ **Confidence-Aware AI** - Auto-escalates at <60% confidence  
 ✅ **RAG Architecture** - 41 TMEP sections with semantic search  
+✅ **Dual Input Mode** - Manual form entry OR direct PDF report upload  
 ✅ **Complete Pipeline** - PDF parsing → Analysis → Actionable insights  
 ✅ **Professional Reports** - Cost/timeline estimates included  
 
@@ -25,7 +26,7 @@ This system provides **comprehensive risk assessment** for trademark application
 
 ## 🖼️ Screenshots
 
-### 1. Input Interface
+### 1. Input Interface (Manual Entry or PDF Upload)
 ![Input Form](docs/images/screenshot1_form.png)
 
 ### 2. Risk Assessment
@@ -300,13 +301,19 @@ If you have the official TMEP PDF files (30 files, 1,581 pages):
 
 1. **Open frontend:** `http://localhost:5173`
 
-2. **Enter test data:**
+2. **Test Manual Entry mode:**
+   - Ensure "✏️ Manual Entry" tab is active (default)
    - Trademark: `TEAR, POUR, LIVE MORE`
    - Classes: `5, 32`
    - Goods/Services: `Energy drinks, sports drinks, dietary supplements`
    - Prior Marks: `LIVEMORE, 5234567`
+   - Click **"Analyze Trademark"**
 
-3. **Click "Analyze Trademark"**
+3. **Test PDF Upload mode:**
+   - Switch to "📄 Upload PDF Report" tab
+   - Drag-and-drop or browse for a trademark search report PDF
+   - Click **"Analyze PDF Report"**
+   - Verify the parsed data preview banner appears above results
 
 4. **Expected results (45-60 seconds):**
    - Risk Level: HIGH or MODERATE
@@ -321,6 +328,7 @@ If you have the official TMEP PDF files (30 files, 1,581 pages):
 Test the API directly using curl:
 
 ```bash
+# Manual analysis
 curl -X POST http://localhost:8000/api/analyze \
   -H "Content-Type: application/json" \
   -d '{
@@ -329,6 +337,10 @@ curl -X POST http://localhost:8000/api/analyze \
     "classes": [5, 32],
     "prior_marks": [{"name": "LIVEMORE", "registration": "5234567"}]
   }'
+
+# PDF-based analysis
+curl -X POST http://localhost:8000/api/analyze-pdf \
+  -F "file=@/path/to/trademark-report.pdf"
 ```
 
 ---
@@ -399,6 +411,7 @@ If you encounter issues:
 ## 📊 Performance Expectations
 
 **Analysis Speed:** 45-60 seconds per trademark  
+**PDF Parsing Speed:** 2-5 seconds for document extraction  
 **Accuracy:** 84% risk level prediction (tested on 50 cases)  
 **Citation Validity:** 100% (zero hallucinations)  
 **Resource Usage:** 8-10GB RAM during analysis
@@ -420,11 +433,19 @@ See [methodology.md](docs/methodology.md) for detailed framework explanation.
 
 ```
 trademark-ai/
-├── backend/          # FastAPI + RAG + Risk Engine
-├── frontend/         # React Dashboard
-├── data/             # TMEP PDFs + Sample reports
-├── docs/             # Documentation + Screenshots
-└── analysis/reports/ # Generated assessments
+├── backend/
+│   ├── main.py              # FastAPI API (3 endpoints: analyze, analyze-pdf, upload)
+│   ├── rag_analyzer.py      # RAG engine (vector search + LLM)
+│   ├── risk_framework.py    # Multi-dimensional risk scoring
+│   ├── document_parser.py   # PDF parsing (CompuMark, USPTO reports)
+│   └── app/data/            # TMEP sections + vector DB
+├── frontend/
+│   └── src/
+│       ├── App.jsx           # Main UI (dual input mode: form + PDF upload)
+│       └── index.css         # Styles
+├── data/                     # TMEP PDFs + Sample reports
+├── docs/                     # Documentation + Screenshots
+└── analysis/reports/         # Generated assessments
 ```
 
 ---
