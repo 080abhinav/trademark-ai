@@ -160,7 +160,7 @@ async def analyze_trademark(request: AnalyzeRequest):
         "filing basis and ownership issues"
     ]
     
-    rag_results = rag_analyzer.analyze_multiple_issues(
+    rag_results = await rag_analyzer.analyze_multiple_issues_parallel(
         trademark=request.mark,
         goods_services=request.goods_services,
         issue_types=issues_to_check
