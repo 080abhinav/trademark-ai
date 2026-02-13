@@ -19,16 +19,16 @@
 
 ## Executive Summary
 
-**Overall Risk Assessment:** HIGH RISK  
-**Risk Score:** 64.5/100  
-**System Confidence:** 81.5%  
-**Recommendation:** PROCEED WITH CAUTION - Significant rejection risk exists. Recommend addressing issues before filing or budgeting for extensive Office Action responses.
+**Overall Risk Assessment:** MODERATE RISK  
+**Risk Score:** 58.5/100  
+**System Confidence:** 87.5%  
+**Recommendation:** PROCEED WITH PREPARATION - Issues exist but can likely be overcome. Budget for 1-2 Office Action responses.
 
 **Key Findings:**
 - 4 substantive issues identified
 - 2 prior confusingly similar marks found
 - Multiple TMEP provisions implicated
-- Estimated cost to overcome: $7,750-$11,625
+- Estimated cost to overcome: $6,500-$9,750
 - Estimated timeline: 7-10 months from filing
 
 ---
@@ -39,15 +39,15 @@
 
 | Dimension | Score | Weight | Contribution | Confidence |
 |-----------|-------|--------|--------------|------------|
-| Rejection Likelihood | 50/100 | 40% | 20.0 points | 85% |
+| Rejection Likelihood | 35/100 | 40% | 14.0 points | 100% |
 | Overcoming Difficulty | 75/100 | 30% | 22.5 points | 85% |
 | Legal Precedent Strength | 70/100 | 20% | 14.0 points | 75% |
 | Examiner Discretion | 80/100 | 10% | 8.0 points | 70% |
-| **TOTAL** | **64.5/100** | **100%** | **64.5 points** | **81.5%** |
+| **TOTAL** | **58.5/100** | **100%** | **58.5 points** | **87.5%** |
 
 ### Dimension Explanations
 
-**1. Rejection Likelihood (50/100 - MODERATE)**
+**1. Rejection Likelihood (35/100 - LOW-MODERATE)**
 - 2 potentially confusing prior marks identified in similar/overlapping classes
 - Prior marks: LIVEMORE (Reg. 5234567) and POURMORE (Reg. 6123456)
 - Both marks registered for goods in Classes 5 and/or 32
@@ -57,8 +57,8 @@
 - Likelihood of confusion issues are difficult to overcome
 - May require consent agreements with prior mark owners
 - Alternative: Amend identification of goods to avoid conflict
-- Estimated legal costs: $7,750
-- Estimated timeline: 25 months including Office Action responses
+- Estimated legal costs: $6,500
+- Estimated timeline: 22 months including Office Action responses
 
 **3. Legal Precedent Strength (70/100 - MODERATE-HIGH)**
 - Multiple TMEP sections support potential refusal grounds
@@ -112,8 +112,8 @@ This is categorized as MODERATE (not HIGH) because:
 
 ### ISSUE #2: Descriptiveness or Genericness of Mark Elements
 
-**RISK CATEGORY:** MODERATE  
-**TMEP Citation:** §1209.03 - Merely Descriptive Refusals  
+**RISK CATEGORY:** LOW  
+**TMEP Citation:** §1207 - Merely Descriptive Refusals  
 **Confidence:** 75%
 
 **Description:**  
@@ -145,8 +145,8 @@ However, risk exists because:
 - Emphasize the phrase as a whole creates unique impression
 - Consider amending to Supplemental Register if necessary
 
-**Estimated Cost:** $1,500-3,000  
-**Estimated Timeline:** 6-9 months
+**Estimated Cost:** $500-1,500  
+**Estimated Timeline:** 3-6 months
 
 ---
 
@@ -186,7 +186,7 @@ This is LOW risk because:
 ### ISSUE #4: Filing Basis and Ownership Verification
 
 **RISK CATEGORY:** MODERATE  
-**TMEP Citation:** §1301 - Ownership of Mark  
+**TMEP Citation:** §0005-foreword - Filing Basis and Ownership  
 **Confidence:** 70%
 
 **Description:**  
@@ -258,7 +258,7 @@ The common law marks and domain names suggest market usage of similar phrases, b
 - Filing fees: $350-$750 per class
 - Initial attorney fees: $1,500-$3,000
 - Office Action responses: $2,500-$5,000 each
-- **Total: $7,750-$11,625**
+- **Total: $6,500-$9,750**
 
 **Worst Case Scenario (Multiple Office Actions + Appeal):**
 - All above costs
@@ -312,7 +312,7 @@ Issues exist but can likely be overcome with proper legal strategy. Recommend:
 
 ### System Confidence Metrics
 
-**Overall Analysis Confidence:** 81.5%  
+**Overall Analysis Confidence:** 87.5%  
 **Breakdown:**
 - Retrieval quality (TMEP sections): 45% relevance score
 - LLM self-assessment: 85% confidence
@@ -321,7 +321,7 @@ Issues exist but can likely be overcome with proper legal strategy. Recommend:
 ### Human Review Recommendation
 
 **Human Review Required:** NO  
-**Reasoning:** Confidence score (81.5%) exceeds threshold (60%) for automated analysis
+**Reasoning:** Confidence score (87.5%) exceeds threshold (60%) for automated analysis
 
 However, we recommend attorney review for:
 - Final filing strategy decisions
@@ -383,10 +383,10 @@ Confidence = (Retrieval Quality × 0.4) +
 
 ## Conclusion
 
-The trademark "TEAR, POUR, LIVE MORE" for energy drinks, sports drinks, and dietary supplements presents a **HIGH RISK** application with significant likelihood of Office Action(s). The primary concerns are likelihood of confusion with prior registered marks and potential descriptiveness issues.
+The trademark "TEAR, POUR, LIVE MORE" for energy drinks, sports drinks, and dietary supplements presents a **MODERATE RISK** application with some likelihood of Office Action(s). The primary concerns are likelihood of confusion with prior registered marks and potential descriptiveness issues.
 
-**Overall Assessment:** 64.5/100 (HIGH RISK)  
-**Recommendation:** Proceed with caution, budget for legal fees of $7,750-$11,625  
+**Overall Assessment:** 58.5/100 (MODERATE RISK)  
+**Recommendation:** Proceed with preparation, budget for legal fees of $6,500-$9,750  
 **Expected Timeline:** 7-10 months from filing to registration  
 
 With proper legal strategy and adequate response to Office Actions, registration is achievable but not assured. Recommend consultation with experienced trademark attorney before filing.
