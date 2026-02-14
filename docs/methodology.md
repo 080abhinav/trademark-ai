@@ -88,9 +88,9 @@ Calculation:
 - High issues: 2 × 15 = 30 points
 - Prior marks: 2 × 10 = 20 points
 - TMEP evidence: 0 points (not strong enough)
-= 50/100 (MODERATE rejection likelihood)
+= 35/100 (LOW-MODERATE rejection likelihood)
 
-Confidence: 85% (good retrieval quality, validated citations)
+Confidence: 100% (good retrieval quality, validated citations)
 ```
 
 ---
@@ -142,8 +142,8 @@ Max: 70
 Weighted: 45 × 0.6 + 70 × 0.4 = 27 + 28 = 55
 
 Adjustments:
-- Cost $7,750 > $5,000: +10
-- Timeline 25 months > 12: +10
+- Cost $6,500 > $5,000: +10
+- Timeline 22 months > 12: +10
 
 Final: 55 + 20 = 75/100 (HIGH difficulty)
 
@@ -252,12 +252,12 @@ overall_score = (
 
 **Example (TEAR, POUR, LIVE MORE):**
 ```
-Rejection:   50 × 0.40 = 20.0
+Rejection:   35 × 0.40 = 14.0
 Difficulty:  75 × 0.30 = 22.5
 Precedent:   70 × 0.20 = 14.0
 Discretion:  80 × 0.10 =  8.0
                       -------
-Overall:               64.5/100 = HIGH RISK
+Overall:               58.5/100 = MODERATE RISK
 ```
 
 **Risk Level Thresholds:**
@@ -420,7 +420,7 @@ Human Review: NOT REQUIRED
 - Better to escalate than give bad advice
 
 **System-Wide Confidence:**
-- Average across all dimensions: **81.5%**
+- Average across all dimensions: **87.5%**
 - Weighted by dimension importance
 - Displayed to user for transparency
 
@@ -487,7 +487,7 @@ Adjustments:
 Adjusted: $10,000 × 1.60 = $16,000
 
 Output Range: $10,000-$15,000
-(Conservative: $7,750-$11,625 displayed)
+(Conservative: $6,500-$9,750 displayed)
 ```
 
 ### Timeline Estimation Model
@@ -537,24 +537,24 @@ Total: 18 months → Output "7-10 months" (conservative estimate)
 **Analysis Results:**
 
 #### Overall Assessment
-- **Risk Level:** HIGH
-- **Risk Score:** 64.5/100
-- **Confidence:** 81.5%
+- **Risk Level:** MODERATE
+- **Risk Score:** 58.5/100
+- **Confidence:** 87.5%
 - **Human Review Required:** NO (confidence > 60%)
 
 #### Four Dimensions
 
-1. **Rejection Likelihood: 50/100 (Weight: 40%)**
+1. **Rejection Likelihood: 35/100 (Weight: 40%)**
    - 2 potentially confusing prior marks identified
    - Both in same/related classes
    - Moderate similarity to mark elements
-   - Confidence: 85%
+   - Confidence: 100%
 
 2. **Overcoming Difficulty: 75/100 (Weight: 30%)**
    - Likelihood of confusion difficult to overcome
    - May require consent agreements or abandonment
-   - Estimated legal costs: $7,750
-   - Estimated timeline: 25 months
+   - Estimated legal costs: $6,500
+   - Estimated timeline: 22 months
    - Confidence: 85%
 
 3. **Legal Precedent Strength: 70/100 (Weight: 20%)**
@@ -577,10 +577,10 @@ Total: 18 months → Output "7-10 months" (conservative estimate)
    - Time: 6-9 months
    - Recommendation: Review analysis and consider attorney consultation
 
-2. **Descriptiveness Or Genericness [MODERATE]**
+2. **Descriptiveness Or Genericness [LOW]**
    - TMEP §1207 cited  
-   - Cost: $1,500-3,000
-   - Time: 6-9 months
+   - Cost: $500-1,500
+   - Time: 3-6 months
    - Recommendation: Review analysis and consider attorney consultation
 
 3. **Specimen And Identification Requirements [LOW]**
@@ -607,7 +607,7 @@ Total: 18 months → Output "7-10 months" (conservative estimate)
 4. Consider trademark attorney for Office Action response
 5. Monitor similar applications during prosecution
 
-**Cost Estimate:** $7,750-$11,625  
+**Cost Estimate:** $6,500-$9,750  
 **Timeline Estimate:** 7-10 months
 
 ---
@@ -663,7 +663,7 @@ This multi-dimensional risk assessment methodology provides:
 
 ---
 
-*Last Updated: February 8, 2026*  
+*Last Updated: February 14, 2026*  
 *System Version: 1.0.0*  
 *Validation Dataset: 50 trademark applications*  
 *TMEP Sections: 41 searchable guidelines*
