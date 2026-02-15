@@ -112,6 +112,48 @@ class PdfAnalysisResponse(AnalysisResponse):
     total_pdf_conflicts: int
     report_date: Optional[str] = None
 
+# --- Prior mark analysis helpers ---
+
+def _determine_confusion_severity(mark: str, prior_marks: list, confidence: float) -> RiskLevel:
+    """
+    Determine confusion severity by checking whether the applied-for mark
+    contains a prior mark name (case-insensitive).  This is the single
+    strongest signal for likelihood-of-confusion rejections.
+    """
+    mark_lower = mark.lower().strip()
+
+    if prior_marks:
+        for pm in prior_marks:
+            pm_name = (pm.get("name") or pm.get("mark") or "").lower().strip()
+            if not pm_name:
+                continue
+            # Direct name containment  →  near-certain confusion
+            if pm_name in mark_lower or mark_lower in pm_name:
+                return RiskLevel.CRITICAL
+
+        # Prior marks exist but no direct name match
+        return RiskLevel.HIGH if confidence > 0.5 else RiskLevel.MODERATE
+
+    # No prior marks provided — fall back to LLM confidence
+    return RiskLevel.HIGH if confidence > 0.7 else RiskLevel.MODERATE
+
+
+def _enrich_prior_marks(mark: str, prior_marks: list) -> list:
+    """
+    Return a copy of *prior_marks* with an added ``name_contained`` flag
+    so the risk framework can boost scoring when the applied mark literally
+    contains a prior mark name.
+    """
+    mark_lower = mark.lower().strip()
+    enriched = []
+    for pm in (prior_marks or []):
+        pm_copy = dict(pm)
+        pm_name = (pm_copy.get("name") or pm_copy.get("mark") or "").lower().strip()
+        pm_copy["name_contained"] = bool(pm_name and (pm_name in mark_lower or mark_lower in pm_name))
+        enriched.append(pm_copy)
+    return enriched
+
+
 # API Endpoints
 
 @app.get("/")
@@ -189,7 +231,9 @@ async def analyze_trademark(request: AnalyzeRequest):
         
         if "confusion" in issue_type.lower():
             category = IssueCategory.LIKELIHOOD_CONFUSION
-            severity = RiskLevel.HIGH if rag_result.confidence > 0.7 else RiskLevel.MODERATE
+            severity = _determine_confusion_severity(
+                request.mark, request.prior_marks or [], rag_result.confidence
+            )
         elif "descriptive" in issue_type.lower():
             category = IssueCategory.DESCRIPTIVENESS
             severity = RiskLevel.MODERATE if rag_result.confidence > 0.6 else RiskLevel.LOW
@@ -226,9 +270,12 @@ async def analyze_trademark(request: AnalyzeRequest):
     # Step 3: Calculate risk dimensions
     print("   🎯 Step 3: Calculating risk dimensions...")
     
+    # Enrich prior marks with name-containment flag for risk framework
+    enriched_prior_marks = _enrich_prior_marks(request.mark, request.prior_marks or [])
+    
     rejection = risk_framework.assess_rejection_likelihood(
         issues=trademark_issues,
-        similar_marks=request.prior_marks,
+        similar_marks=enriched_prior_marks,
         tmep_evidence=[{"section": i.tmep_section} for i in trademark_issues]
     )
     
@@ -427,7 +474,9 @@ async def analyze_pdf(file: UploadFile = File(...)):
             
             if "confusion" in issue_type.lower():
                 category = IssueCategory.LIKELIHOOD_CONFUSION
-                severity = RiskLevel.HIGH if rag_result.confidence > 0.7 else RiskLevel.MODERATE
+                severity = _determine_confusion_severity(
+                    mark, prior_marks, rag_result.confidence
+                )
             elif "descriptive" in issue_type.lower():
                 category = IssueCategory.DESCRIPTIVENESS
                 severity = RiskLevel.MODERATE if rag_result.confidence > 0.6 else RiskLevel.LOW
@@ -462,9 +511,12 @@ async def analyze_pdf(file: UploadFile = File(...)):
         # Step 4: Calculate risk dimensions
         print("   🎯 Calculating risk dimensions...")
         
+        # Enrich prior marks with name-containment flag for risk framework
+        enriched_prior_marks = _enrich_prior_marks(mark, prior_marks)
+        
         rejection = risk_framework.assess_rejection_likelihood(
             issues=trademark_issues,
-            similar_marks=prior_marks,
+            similar_marks=enriched_prior_marks,
             tmep_evidence=[{"section": i.tmep_section} for i in trademark_issues]
         )
         

@@ -180,19 +180,29 @@ class RiskFramework:
         high_count = sum(1 for i in issues if i.severity == RiskLevel.HIGH)
         
         if critical_count > 0:
-            score += min(critical_count * 30, 60)  # Cap at 60 for critical issues
+            score += min(critical_count * 35, 70)  # Cap at 70 for critical issues
             explanations.append(f"{critical_count} critical issue(s) identified")
             confidence *= 0.9  # High confidence in critical issues
         
         if high_count > 0:
-            score += min(high_count * 15, 30)  # Cap at 30 for high issues
+            score += min(high_count * 20, 40)  # Cap at 40 for high issues
             explanations.append(f"{high_count} high-severity issue(s) identified")
             confidence *= 0.85
         
         # Similar marks increase rejection likelihood
+        # Name containment (e.g. "RED BULL" in "RED BULL POWER") is the strongest signal
         if similar_marks:
-            confusion_risk = len(similar_marks) * 10
-            score += min(confusion_risk, 25)
+            mark_risk = 0
+            has_containment = False
+            for m in similar_marks:
+                base_score = 25  # Up from 10 — each prior mark is a real risk
+                if m.get('name_contained'):
+                    base_score += 20  # Near-certain confusion when name is contained
+                    has_containment = True
+                mark_risk += base_score
+            score += min(mark_risk, 60)  # Cap at 60 for prior marks
+            if has_containment:
+                explanations.append(f"Applied mark contains prior mark name — high confusion risk")
             explanations.append(f"{len(similar_marks)} potentially confusing prior mark(s)")
             citations.extend([m.get('registration', 'Prior mark') for m in similar_marks[:3]])
         

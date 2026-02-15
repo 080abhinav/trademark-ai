@@ -209,7 +209,7 @@ CITATIONS_USED: [List section numbers you cited, e.g., 1207, 1209]
                     "seed":42,
                     "stream": False
                 },
-                timeout=60
+                timeout=180
             )
             
             if response.status_code == 200:

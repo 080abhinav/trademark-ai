@@ -1,0 +1,38 @@
+============================================================
+TEST 1: RED BULL POWER with prior mark RED BULL (name contained)
+============================================================
+  Rejection Likelihood score: 90.0
+  Explanation: Rejection Likelihood: 1 critical issue(s) identified; Applied mark contains prior mark name — high confusion risk; 1 potentially confusing prior mark(s)
+  Overcoming Difficulty score: 84.0
+  Legal Precedent score: 70
+  Examiner Discretion score: 80
+
+  OVERALL SCORE: 83.2/100
+  RISK LEVEL: CRITICAL
+  Confidence: 83.5%
+  PASSED
+
+============================================================
+TEST 2: FRESH JUICE (no prior marks, clean mark)
+============================================================
+  Rejection: 5.0, Overcoming: 41.0, Precedent: 50, Discretion: 65
+  OVERALL SCORE: 30.8/100
+  RISK LEVEL: LOW
+  PASSED
+
+============================================================
+TEST 3: NIKE AIR MAX with prior mark NIKE (name contained)
+============================================================
+  OVERALL SCORE: 77.5/100
+  RISK LEVEL: CRITICAL
+  PASSED
+
+============================================================
+TEST 4: Prior marks supplied but no name containment
+============================================================
+  Rejection: 50.0
+  OVERALL SCORE: 57.5/100
+  RISK LEVEL: MODERATE
+  PASSED
+
+ALL 4 TESTS PASSED!
