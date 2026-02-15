@@ -257,15 +257,26 @@ class RiskFramework:
             IssueCategory.PROCEDURAL: 10              # Easy - administrative fix
         }
         
+        # Severity multiplier — LOW issues are much easier to overcome
+        severity_mult = {
+            RiskLevel.CRITICAL: 1.0,
+            RiskLevel.HIGH: 0.8,
+            RiskLevel.MODERATE: 0.5,
+            RiskLevel.LOW: 0.2,
+            RiskLevel.MINIMAL: 0.1,
+        }
+        
         max_difficulty = 0
         total_difficulty = 0
         
         for issue in issues:
-            difficulty = difficulty_map.get(issue.category, 30)
+            base_difficulty = difficulty_map.get(issue.category, 30)
+            mult = severity_mult.get(issue.severity, 0.5)
+            difficulty = base_difficulty * mult
             total_difficulty += difficulty
             max_difficulty = max(max_difficulty, difficulty)
             
-            if difficulty >= 60:
+            if difficulty >= 40:
                 explanations.append(f"{issue.category.value} is difficult to overcome")
                 citations.append(issue.tmep_section)
         
@@ -313,7 +324,7 @@ class RiskFramework:
         - Applicable case law
         - Third-party registrations (showing USPTO accepted similar marks)
         """
-        score = 50  # Start neutral
+        score = 30  # Start low-neutral
         confidence = 0.75  # Moderate confidence in legal analysis
         explanations = []
         citations = []
@@ -372,7 +383,7 @@ class RiskFramework:
         - Gray areas in trademark law
         - Likelihood examiner could reasonably decide either way
         """
-        score = 30  # Default moderate discretion
+        score = 20  # Default low discretion
         confidence = 0.70  # Lower confidence - predicting human judgment is hard
         explanations = []
         citations = []
@@ -383,10 +394,19 @@ class RiskFramework:
             IssueCategory.DESCRIPTIVENESS,       # Descriptive vs suggestive is gray area
         ]
         
-        discretionary_issues = [i for i in issues if i.category in high_discretion_categories]
+        # Only MODERATE+ severity issues meaningfully increase discretion
+        discretionary_issues = [
+            i for i in issues 
+            if i.category in high_discretion_categories 
+            and i.severity in (RiskLevel.HIGH, RiskLevel.CRITICAL, RiskLevel.MODERATE)
+        ]
         
         if discretionary_issues:
-            score = 50 + len(discretionary_issues) * 10
+            for di in discretionary_issues:
+                if di.severity in (RiskLevel.CRITICAL, RiskLevel.HIGH):
+                    score += 15
+                else:
+                    score += 8
             explanations.append(f"{len(discretionary_issues)} issue(s) involve examiner discretion")
             citations.extend([i.tmep_section for i in discretionary_issues[:2]])
         

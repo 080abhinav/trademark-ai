@@ -6,19 +6,19 @@ const API_URL = 'http://localhost:8000';
 function App() {
   // Input mode: 'form' or 'pdf'
   const [inputMode, setInputMode] = useState('form');
-  
+
   const [formData, setFormData] = useState({
     mark: 'TEAR, POUR, LIVE MORE',
     goods_services: 'Energy drinks, sports drinks, dietary supplements',
     classes: '5, 32',
     prior_marks: 'LIVEMORE, 5234567\nPOURMORE, 6123456'
   });
-  
+
   // PDF upload state
   const [pdfFile, setPdfFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
-  
+
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -27,7 +27,7 @@ function App() {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     setLoading(true);
     setError(null);
     setAnalysis(null);
@@ -38,14 +38,14 @@ function App() {
         .map(c => parseInt(c.trim()))
         .filter(c => !isNaN(c));
 
-      const prior_marks = formData.prior_marks.trim() 
+      const prior_marks = formData.prior_marks.trim()
         ? formData.prior_marks.split('\n').map(line => {
-            const parts = line.split(',').map(s => s.trim());
-            return { 
-              name: parts[0] || '', 
-              registration: parts[1] || '' 
-            };
-          }).filter(m => m.name)
+          const parts = line.split(',').map(s => s.trim());
+          return {
+            name: parts[0] || '',
+            registration: parts[1] || ''
+          };
+        }).filter(m => m.name)
         : [];
 
       const response = await axios.post(`${API_URL}/api/analyze`, {
@@ -59,10 +59,10 @@ function App() {
       });
 
       setAnalysis(response.data);
-      
+
     } catch (err) {
-      const errorMsg = err.response?.data?.detail 
-        || err.message 
+      const errorMsg = err.response?.data?.detail
+        || err.message
         || 'Failed to analyze trademark. Please check if the backend is running.';
       setError(errorMsg);
     } finally {
@@ -76,7 +76,7 @@ function App() {
       setError('Please select a PDF file first.');
       return;
     }
-    
+
     setLoading(true);
     setError(null);
     setAnalysis(null);
@@ -91,10 +91,10 @@ function App() {
       });
 
       setAnalysis(response.data);
-      
+
     } catch (err) {
-      const errorMsg = err.response?.data?.detail 
-        || err.message 
+      const errorMsg = err.response?.data?.detail
+        || err.message
         || 'Failed to analyze PDF. Please check if the backend is running.';
       setError(errorMsg);
     } finally {
@@ -176,17 +176,17 @@ function App() {
         {/* Input Card */}
         <div className="card">
           <h2 style={{ fontSize: '20px', marginBottom: '20px' }}>Trademark Application Details</h2>
-          
+
           {/* ====== INPUT MODE TOGGLE ====== */}
           <div className="input-mode-toggle">
-            <button 
+            <button
               className={`toggle-btn ${inputMode === 'form' ? 'active' : ''}`}
               onClick={() => setInputMode('form')}
               type="button"
             >
               ✏️ Manual Entry
             </button>
-            <button 
+            <button
               className={`toggle-btn ${inputMode === 'pdf' ? 'active' : ''}`}
               onClick={() => setInputMode('pdf')}
               type="button"
@@ -208,7 +208,7 @@ function App() {
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label>Classes (comma-separated)</label>
                   <input
@@ -256,7 +256,7 @@ function App() {
           {inputMode === 'pdf' && (
             <div>
               {/* Drop zone */}
-              <div 
+              <div
                 className={`upload-zone ${isDragging ? 'dragging' : ''} ${pdfFile ? 'has-file' : ''}`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -270,7 +270,7 @@ function App() {
                   onChange={handleFileSelect}
                   style={{ display: 'none' }}
                 />
-                
+
                 {pdfFile ? (
                   <div className="file-preview">
                     <div className="file-icon">📄</div>
@@ -278,7 +278,7 @@ function App() {
                       <p className="file-name">{pdfFile.name}</p>
                       <p className="file-size">{formatFileSize(pdfFile.size)}</p>
                     </div>
-                    <button 
+                    <button
                       className="file-remove"
                       onClick={(e) => { e.stopPropagation(); setPdfFile(null); }}
                       type="button"
@@ -323,7 +323,7 @@ function App() {
           <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
             <h3>🔍 {inputMode === 'pdf' ? 'Parsing & Analyzing PDF...' : 'Analyzing Trademark...'}</h3>
             <p style={{ color: '#6b7280', marginTop: '8px' }}>
-              {inputMode === 'pdf' 
+              {inputMode === 'pdf'
                 ? 'Extracting data from PDF and running analysis. This may take 1-2 minutes for large reports...'
                 : 'This may take 30-60 seconds. Please wait...'
               }
@@ -362,7 +362,7 @@ function App() {
                 </span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {analysis.parsed_prior_marks_uspto.slice(0, 8).map((m, i) => (
-                    <span 
+                    <span
                       key={i}
                       style={{
                         background: '#f0fdf4',
@@ -396,7 +396,7 @@ function App() {
                 {(analysis.overall_risk_level || 'MODERATE').toUpperCase()} RISK
               </h2>
               <p style={{ fontSize: '16px' }}>
-                Overall Score: {(analysis.overall_risk_score || 0).toFixed(1)}/100 | 
+                Overall Score: {(analysis.overall_risk_score || 0).toFixed(1)}/100 |
                 Confidence: {((analysis.overall_confidence || 0) * 100).toFixed(1)}%
                 {analysis.requires_human_review && ' ⚠️ Human Review Required'}
               </p>
@@ -404,131 +404,131 @@ function App() {
 
             {/* Risk Dimensions */}
             {(analysis.rejection_likelihood || analysis.overcoming_difficulty || analysis.legal_precedent_strength || analysis.examiner_discretion) && (
-            <div className="card">
-              <h3 style={{ fontSize: '18px', marginBottom: '20px' }}>Risk Dimensions</h3>
-              <div className="grid grid-2">
-                {[
-                  { key: 'rejection_likelihood', data: analysis.rejection_likelihood, label: 'Rejection Likelihood' },
-                  { key: 'overcoming_difficulty', data: analysis.overcoming_difficulty, label: 'Overcoming Difficulty' },
-                  { key: 'legal_precedent_strength', data: analysis.legal_precedent_strength, label: 'Legal Precedent' },
-                  { key: 'examiner_discretion', data: analysis.examiner_discretion, label: 'Examiner Discretion' }
-                ].filter(dim => dim.data).map(({ key, data, label }) => (
-                  <div key={key} style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <strong>{data.name || label}</strong>
-                      <span style={{ fontSize: '24px', fontWeight: 'bold' }}>{(data.score || 0).toFixed(0)}</span>
+              <div className="card">
+                <h3 style={{ fontSize: '18px', marginBottom: '20px' }}>Risk Dimensions</h3>
+                <div className="grid grid-2">
+                  {[
+                    { key: 'rejection_likelihood', data: analysis.rejection_likelihood, label: 'Rejection Likelihood' },
+                    { key: 'overcoming_difficulty', data: analysis.overcoming_difficulty, label: 'Overcoming Difficulty' },
+                    { key: 'legal_precedent_strength', data: analysis.legal_precedent_strength, label: 'Legal Precedent' },
+                    { key: 'examiner_discretion', data: analysis.examiner_discretion, label: 'Examiner Discretion' }
+                  ].filter(dim => dim.data).map(({ key, data, label }) => (
+                    <div key={key} style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <strong>{data.name || label}</strong>
+                        <span style={{ fontSize: '24px', fontWeight: 'bold' }}>{(data.score || 0).toFixed(0)}</span>
+                      </div>
+                      <div style={{ width: '100%', height: '8px', background: '#e5e7eb', borderRadius: '4px', marginBottom: '8px' }}>
+                        <div
+                          style={{
+                            width: `${data.score || 0}%`,
+                            height: '100%',
+                            background: '#3b82f6',
+                            borderRadius: '4px'
+                          }}
+                        />
+                      </div>
+                      <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+                        Weight: {((data.weight || 0) * 100).toFixed(0)}% | Confidence: {((data.confidence || 0) * 100).toFixed(0)}%
+                      </p>
+                      <p style={{ fontSize: '14px', color: '#374151' }}>{data.explanation || ''}</p>
                     </div>
-                    <div style={{ width: '100%', height: '8px', background: '#e5e7eb', borderRadius: '4px', marginBottom: '8px' }}>
-                      <div 
-                        style={{ 
-                          width: `${data.score || 0}%`, 
-                          height: '100%', 
-                          background: '#3b82f6', 
-                          borderRadius: '4px' 
-                        }}
-                      />
-                    </div>
-                    <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
-                      Weight: {((data.weight || 0) * 100).toFixed(0)}% | Confidence: {((data.confidence || 0) * 100).toFixed(0)}%
-                    </p>
-                    <p style={{ fontSize: '14px', color: '#374151' }}>{data.explanation || ''}</p>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
             )}
 
             {/* Issues */}
             {analysis.issues && analysis.issues.length > 0 && (
-            <div className="card">
-              <h3 style={{ fontSize: '18px', marginBottom: '16px' }}>
-                Issues Identified ({analysis.issues.length})
-              </h3>
-              {analysis.issues.map((issue, idx) => {
-                const badge = getSeverityBadge(issue.severity || 'moderate');
-                return (
-                  <div key={idx} className="issue-card">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
-                      <h4 style={{ fontSize: '16px', fontWeight: '600', flex: 1 }}>{issue.title || 'Issue'}</h4>
-                      <span 
-                        className="badge" 
-                        style={{ 
-                          background: badge.bg, 
-                          color: badge.text,
-                          marginLeft: '12px'
-                        }}
-                      >
-                        {(issue.severity || 'moderate').toUpperCase()}
-                      </span>
+              <div className="card">
+                <h3 style={{ fontSize: '18px', marginBottom: '16px' }}>
+                  Issues Identified ({analysis.issues.length})
+                </h3>
+                {analysis.issues.map((issue, idx) => {
+                  const badge = getSeverityBadge(issue.severity || 'moderate');
+                  return (
+                    <div key={idx} className="issue-card">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                        <h4 style={{ fontSize: '16px', fontWeight: '600', flex: 1 }}>{issue.title || 'Issue'}</h4>
+                        <span
+                          className="badge"
+                          style={{
+                            background: badge.bg,
+                            color: badge.text,
+                            marginLeft: '12px'
+                          }}
+                        >
+                          {(issue.severity || 'moderate').toUpperCase()}
+                        </span>
+                      </div>
+                      {issue.description && (
+                        <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '12px' }}>
+                          {issue.description}
+                        </p>
+                      )}
+                      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '14px', color: '#6b7280', marginBottom: '12px' }}>
+                        <span>📄 TMEP §{issue.tmep_section || 'N/A'}</span>
+                        <span>💰 {issue.estimated_cost || 'N/A'}</span>
+                        <span>⏱️ {issue.estimated_time || 'N/A'}</span>
+                      </div>
+                      <div style={{ padding: '12px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px' }}>
+                        <strong style={{ fontSize: '14px', color: '#1e40af' }}>Recommendation:</strong>
+                        <p style={{ fontSize: '14px', color: '#1e40af', margin: '4px 0 0 0' }}>
+                          {issue.recommendation || 'Consult with trademark attorney'}
+                        </p>
+                      </div>
                     </div>
-                    {issue.description && (
-                      <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '12px' }}>
-                        {issue.description}
-                      </p>
-                    )}
-                    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '14px', color: '#6b7280', marginBottom: '12px' }}>
-                      <span>📄 TMEP §{issue.tmep_section || 'N/A'}</span>
-                      <span>💰 {issue.estimated_cost || 'N/A'}</span>
-                      <span>⏱️ {issue.estimated_time || 'N/A'}</span>
-                    </div>
-                    <div style={{ padding: '12px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px' }}>
-                      <strong style={{ fontSize: '14px', color: '#1e40af' }}>Recommendation:</strong>
-                      <p style={{ fontSize: '14px', color: '#1e40af', margin: '4px 0 0 0' }}>
-                        {issue.recommendation || 'Consult with trademark attorney'}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
             )}
 
             {/* Recommendations */}
             {(analysis.primary_recommendation || analysis.alternative_strategies || analysis.estimated_total_cost) && (
-            <div className="card">
-              <h3 style={{ fontSize: '18px', marginBottom: '16px' }}>Recommendations & Cost Estimate</h3>
-              
-              {analysis.primary_recommendation && (
-              <div style={{ padding: '16px', background: 'linear-gradient(to right, #eff6ff, #eef2ff)', border: '1px solid #bfdbfe', borderRadius: '8px', marginBottom: '16px' }}>
-                <p style={{ fontWeight: '600', marginBottom: '8px' }}>Primary Recommendation:</p>
-                <p style={{ color: '#374151' }}>{analysis.primary_recommendation}</p>
-              </div>
-              )}
+              <div className="card">
+                <h3 style={{ fontSize: '18px', marginBottom: '16px' }}>Recommendations & Cost Estimate</h3>
 
-              <div className="grid grid-2" style={{ marginBottom: '16px' }}>
-                {analysis.estimated_total_cost && (
-                <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '16px' }}>
-                  <p style={{ fontWeight: '600', marginBottom: '8px' }}>💰 Estimated Cost</p>
-                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#059669' }}>
-                    {analysis.estimated_total_cost}
-                  </p>
-                </div>
+                {analysis.primary_recommendation && (
+                  <div style={{ padding: '16px', background: 'linear-gradient(to right, #eff6ff, #eef2ff)', border: '1px solid #bfdbfe', borderRadius: '8px', marginBottom: '16px' }}>
+                    <p style={{ fontWeight: '600', marginBottom: '8px' }}>Primary Recommendation:</p>
+                    <p style={{ color: '#374151' }}>{analysis.primary_recommendation}</p>
+                  </div>
                 )}
-                
-                {analysis.estimated_timeline && (
-                <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '16px' }}>
-                  <p style={{ fontWeight: '600', marginBottom: '8px' }}>⏱️ Estimated Timeline</p>
-                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#2563eb' }}>
-                    {analysis.estimated_timeline}
-                  </p>
-                </div>
-                )}
-              </div>
 
-              {analysis.alternative_strategies && analysis.alternative_strategies.length > 0 && (
-              <div>
-                <p style={{ fontWeight: '600', marginBottom: '12px' }}>Alternative Strategies:</p>
-                <ul style={{ listStyle: 'none', padding: 0 }}>
-                  {analysis.alternative_strategies.map((alt, idx) => (
-                    <li key={idx} style={{ display: 'flex', alignItems: 'start', gap: '8px', marginBottom: '8px' }}>
-                      <span style={{ color: '#16a34a', fontSize: '20px' }}>✓</span>
-                      <span style={{ color: '#374151' }}>{alt}</span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="grid grid-2" style={{ marginBottom: '16px' }}>
+                  {analysis.estimated_total_cost && (
+                    <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '16px' }}>
+                      <p style={{ fontWeight: '600', marginBottom: '8px' }}>💰 Estimated Cost</p>
+                      <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#059669' }}>
+                        {analysis.estimated_total_cost}
+                      </p>
+                    </div>
+                  )}
+
+                  {analysis.estimated_timeline && (
+                    <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '16px' }}>
+                      <p style={{ fontWeight: '600', marginBottom: '8px' }}>⏱️ Estimated Timeline</p>
+                      <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#2563eb' }}>
+                        {analysis.estimated_timeline}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {analysis.alternative_strategies && analysis.alternative_strategies.length > 0 && (
+                  <div>
+                    <p style={{ fontWeight: '600', marginBottom: '12px' }}>Alternative Strategies:</p>
+                    <ul style={{ listStyle: 'none', padding: 0 }}>
+                      {analysis.alternative_strategies.map((alt, idx) => (
+                        <li key={idx} style={{ display: 'flex', alignItems: 'start', gap: '8px', marginBottom: '8px' }}>
+                          <span style={{ color: '#16a34a', fontSize: '20px' }}>✓</span>
+                          <span style={{ color: '#374151' }}>{alt}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
-              )}
-            </div>
             )}
 
             {/* Prior Marks Summary */}

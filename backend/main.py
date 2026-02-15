@@ -134,8 +134,8 @@ def _determine_confusion_severity(mark: str, prior_marks: list, confidence: floa
         # Prior marks exist but no direct name match
         return RiskLevel.HIGH if confidence > 0.5 else RiskLevel.MODERATE
 
-    # No prior marks provided — fall back to LLM confidence
-    return RiskLevel.HIGH if confidence > 0.7 else RiskLevel.MODERATE
+    # No prior marks provided — low confusion risk without known conflicts
+    return RiskLevel.MODERATE if confidence > 0.8 else RiskLevel.LOW
 
 
 def _enrich_prior_marks(mark: str, prior_marks: list) -> list:
