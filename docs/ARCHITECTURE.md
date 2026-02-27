@@ -111,7 +111,7 @@ Per-mark analysis architecture:
 
 
 **Smart Prior-Mark Pre-Filtering:**
-Before calling the LLM for 120 prior marks, a Python deterministic filter categorizes exact matches as HIGH risk and zero-overlap marks as LOW risk. The LLM is only called for the ~10% of marks that are truly ambiguous, drastically reducing API costs and latency.
+Before calling the LLM for prior marks, a Python deterministic filter categorizes exact matches as HIGH risk and zero-overlap marks as LOW risk. The LLM is only called for the rest of marks that are truly ambiguous, drastically reducing API costs and latency.
 
 
 **The 6-Layer Anti-Hallucination Architecture:**
