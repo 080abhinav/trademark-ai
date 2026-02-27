@@ -291,11 +291,11 @@ class RiskFramework:
             score += 10
             explanations.append(f"Estimated legal costs: ${total_cost:,}")
         
-        # Factor in time if lengthy
-        total_time = sum(estimated_times.values())
-        if total_time > 12:  # months
+        # Factor in time if lengthy (use MAX — issues resolved in parallel, not sequentially)
+        max_time = max(estimated_times.values()) if estimated_times else 0
+        if max_time > 12:  # months
             score += 10
-            explanations.append(f"Estimated timeline: {total_time} months")
+            explanations.append(f"Estimated timeline: {max_time} months")
         
         score = min(score, 100)
         
@@ -489,11 +489,6 @@ class RiskFramework:
                 "Maintain specimens and usage evidence",
                 "Plan for straightforward prosecution timeline (8-12 months)"
             ]
-        
-        # Add issue-specific recommendations
-        for issue in issues:
-            if issue.recommendation and issue.recommendation not in alternatives:
-                alternatives.append(issue.recommendation)
         
         return primary, alternatives[:5]  # Top 5 alternatives
 

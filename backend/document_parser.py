@@ -63,9 +63,10 @@ class DocumentParser:
     
     def __init__(self):
         self.mark_patterns = [
-            r"Mark:\s*([A-Z0-9\s,\.!?-]+)",
-            r"Trademark:\s*([A-Z0-9\s,\.!?-]+)",
-            r"Applied-for Mark:\s*([A-Z0-9\s,\.!?-]+)"
+            r"Mark Searched:\s*([^\n]+)",       # CompuMark format (most common)
+            r"Applied-for Mark:\s*([^\n]+)",
+            r"Trademark:\s*([^\n]+)",
+            r"Mark:\s*([A-Z][A-Z0-9,\. !?-]+)"  # Fallback — stop at lowercase/newline
         ]
         
         self.class_pattern = r"Class(?:es)?:\s*([\d,\s]+)"
@@ -149,28 +150,66 @@ class DocumentParser:
                 mark = match.group(1).strip()
                 break
         
-        # Extract classes
-        classes = []
-        class_match = re.search(self.class_pattern, text, re.IGNORECASE)
-        if class_match:
-            class_str = class_match.group(1)
-            classes = [int(c.strip()) for c in class_str.split(',') if c.strip().isdigit()]
+        # --- IMPORTANT: Only look in the APPLICATION SECTION (first ~3000 chars) ---
+        # The rest of the PDF contains prior marks with THEIR classes, which we must NOT pick up
+        app_section = text[:3000]
         
-        # Extract goods/services (simplified - look for common patterns)
+        # Extract classes from application section only
+        classes = set()
+        # Pattern 1: "Class 5", "Class 32", "Classes: 5, 32"
+        for m in re.finditer(r"Class(?:es)?[:\s]+([\d,\s]+)", app_section, re.IGNORECASE):
+            for c in m.group(1).split(','):
+                c = c.strip()
+                if c.isdigit() and 1 <= int(c) <= 45:
+                    classes.add(int(c))
+        # Pattern 2: "CLASS 5:" or "CLASS 32:" standalone (application description)
+        for m in re.finditer(r"CLASS\s+(\d{1,2})\s*:", app_section):
+            c = int(m.group(1))
+            if 1 <= c <= 45:
+                classes.add(c)
+        classes = sorted(classes)
+        
+        # Extract goods/services from application section only
+        # The PDF may break goods/services text across multiple lines, so we extract
+        # the full block and join lines before parsing
         goods_services = []
+        seen_gs = set()
         
-        # Common indicators of goods/services descriptions
-        gs_patterns = [
-            r"Goods/Services:\s*([^\n]+)",
-            r"Class \d+:\s*([^\n]+)"
-        ]
+        # Step 1: Extract the full goods/services text block (may span multiple lines)
+        gs_block_match = re.search(
+            r"Goods/Services:\s*(.*?)(?:Trademark Research Report|Client understands|Report Graph|$)",
+            app_section,
+            re.DOTALL | re.IGNORECASE
+        )
         
-        for pattern in gs_patterns:
-            matches = re.finditer(pattern, text, re.IGNORECASE)
-            for match in matches:
-                gs = match.group(1).strip()
-                if gs and len(gs) > 10:  # Filter out noise
+        if gs_block_match:
+            # Join lines and normalize whitespace
+            gs_block = gs_block_match.group(1)
+            gs_block = re.sub(r"\s*\n\s*", " ", gs_block).strip()  # Join newlines with space
+            gs_block = re.sub(r"\s{2,}", " ", gs_block)  # Collapse multiple spaces
+            # Fix common OCR artifacts (mid-word spaces from PDF extraction)
+            gs_block = gs_block.replace('ELECTROL YTES', 'ELECTROLYTES')
+            gs_block = gs_block.replace('AGGREG ATE', 'AGGREGATE')
+            
+            # Split by CLASS keyword to get per-class entries
+            # Use re.split to split on "CLASS" boundaries
+            parts = re.split(r"(?=CLASS\s+\d+\s*:)", gs_block, flags=re.IGNORECASE)
+            for part in parts:
+                gs = part.strip().rstrip(".")
+                gs_key = gs[:50]
+                if gs and len(gs) > 10 and gs_key not in seen_gs and re.match(r"CLASS\s+\d+", gs, re.IGNORECASE):
                     goods_services.append(gs)
+                    seen_gs.add(gs_key)
+        
+        # Fallback: try per-line CLASS pattern
+        if not goods_services:
+            gs_class_pattern = r"CLASS\s+\d+\s*:\s*([^\n]+)"
+            for match in re.finditer(gs_class_pattern, app_section):
+                gs = match.group(0).strip()
+                gs_key = gs[:50]
+                if gs and len(gs) > 10 and gs_key not in seen_gs:
+                    goods_services.append(gs)
+                    seen_gs.add(gs_key)
         
         # If no goods/services found, provide defaults based on classes
         if not goods_services and classes:
@@ -181,7 +220,7 @@ class DocumentParser:
         
         return TrademarkApplication(
             mark=mark,
-            applicant=None,  # Can be extracted if needed
+            applicant=None,
             goods_services=goods_services,
             classes=classes,
             filing_basis=None,
@@ -189,52 +228,93 @@ class DocumentParser:
         )
     
     def _extract_uspto_marks(self, text: str) -> List[PriorMark]:
-        """Extract USPTO registered/pending marks from report"""
+        """
+        Extract USPTO registered/pending marks from CompuMark report.
+        
+        Format found in pages 7+ of the PDF:
+            1. LIVEMORE
+            Registered 5 LIVEMORE SUPERFOODS, LLC 88-281,376 19
+            2. LIVEMORE
+            Registered 29, 32 LIVEMORE SUPERFOODS, LLC 88-230,376 21
+        """
         marks = []
+        seen_names = set()
         
-        # Look for USPTO sections
-        # CompuMark reports typically have "UNITED STATES PATENT AND TRADEMARK OFFICE" sections
-        uspto_section_pattern = r"UNITED STATES PATENT AND TRADEMARK OFFICE.*?(?=STATE TRADEMARK|COMMON LAW|DOMAIN NAMES|$)"
+        # --- Primary pattern: numbered entries with full details ---
+        # Matches: NUMBER. MARK_NAME \n STATUS CLASSES OWNER SERIAL PAGE
+        detailed_pattern = (
+            r'(\d+)\.\s+'                          # Number
+            r'([A-Z][^\n]+)\n'                     # Mark name
+            r'(Registered|Abandoned|Cancelled|Renewed|Pending|Published)'  # Status
+            r'\s+([\d,\s]+(?:Multi)?)'             # Classes
+            r'\s+(.+?)'                            # Owner
+            r'\s+(\d{2}.\d{3},\d{3})'             # Serial number
+            r'\s+(\d+)'                            # Page
+        )
         
-        uspto_match = re.search(uspto_section_pattern, text, re.IGNORECASE | re.DOTALL)
-        
-        if not uspto_match:
-            # Try alternative pattern
-            uspto_section_pattern = r"USPTO.*?(?=State|Common|Domain|$)"
-            uspto_match = re.search(uspto_section_pattern, text, re.IGNORECASE | re.DOTALL)
-        
-        if uspto_match:
-            uspto_text = uspto_match.group(0)
+        for match in re.finditer(detailed_pattern, text):
+            num, mark_name, status, class_str, owner, serial, page = match.groups()
+            mark_name = mark_name.strip()
             
-            # Extract individual mark records
-            # Pattern: Mark name followed by registration/serial number
-            mark_records = re.finditer(
-                r"([A-Z][A-Z0-9\s,\.\-\']{2,50})\s+(?:Reg\.?\s*No\.?\s*:?\s*([\d,]+)|Serial\s*No\.?\s*:?\s*([\d,]+))",
-                uspto_text
+            # Parse classes
+            mark_classes = []
+            if 'Multi' not in class_str:
+                for c in class_str.split(','):
+                    c = c.strip()
+                    if c.isdigit() and 1 <= int(c) <= 45:
+                        mark_classes.append(int(c))
+            
+            # Clean serial number
+            serial = serial.replace('\u2212', '-').replace('\u2013', '-')
+            
+            similarity = self._calculate_similarity_score(mark_name)
+            
+            prior_mark = PriorMark(
+                mark=mark_name,
+                registration_number=serial,
+                serial_number=serial,
+                owner=owner.strip()[:100],
+                classes=mark_classes,
+                goods_services="",
+                status=status,
+                similarity_score=similarity,
+                source="USPTO"
             )
-            
-            for match in mark_records:
-                mark_name = match.group(1).strip()
-                reg_num = match.group(2)
-                serial_num = match.group(3)
+            marks.append(prior_mark)
+            seen_names.add(mark_name.upper())
+        
+        # --- Fallback: simpler pattern if detailed didn't find enough ---
+        if len(marks) < 20:
+            simple_pattern = (
+                r'(\d+)\.\s+'
+                r'([A-Z][^\n]+)\n'
+                r'(Registered|Abandoned|Cancelled|Renewed|Pending|Published)'
+            )
+            for match in re.finditer(simple_pattern, text):
+                num, mark_name, status = match.groups()
+                mark_name = mark_name.strip()
                 
-                # Calculate simple similarity score (placeholder)
+                if mark_name.upper() in seen_names:
+                    continue
+                seen_names.add(mark_name.upper())
+                
                 similarity = self._calculate_similarity_score(mark_name)
                 
                 prior_mark = PriorMark(
                     mark=mark_name,
-                    registration_number=reg_num,
-                    serial_number=serial_num,
+                    registration_number=None,
+                    serial_number=None,
                     owner=None,
-                    classes=[],  # Can extract if needed
+                    classes=[],
                     goods_services="",
-                    status="Registered" if reg_num else "Pending",
+                    status=status,
                     similarity_score=similarity,
                     source="USPTO"
                 )
                 marks.append(prior_mark)
         
-        return marks[:50]  # Limit to top 50 for performance
+        print(f"      [USPTO Parser] Found {len(marks)} marks using numbered pattern")
+        return marks  # No artificial limit!
     
     def _extract_state_marks(self, text: str) -> List[PriorMark]:
         """Extract state trademark registrations"""

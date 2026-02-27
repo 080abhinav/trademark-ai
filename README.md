@@ -1,471 +1,135 @@
-# AI-Powered Trademark Risk Assessment System
+# Trademark Risk Assessment System
 
-**Intelligent trademark application analysis using RAG architecture, zero-hallucination AI, and multi-dimensional risk scoring.**
+> AI-powered trademark risk analysis with **bulletproof anti-hallucination architecture** — designed specifically to provide reliable, source-verified legal insights without LLM fabrications.
 
-![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)
-![React](https://img.shields.io/badge/React-18+-61dafb.svg)
+## Why This Architecture?
 
----
+Legal tools cannot tolerate AI hallucinations. Most AI tools attempt to feed hundreds of prior trademarks and thousands of words of legal code into an LLM all at once, leading to "context overfeeding" and severe hallucinations where the AI mixes up facts or invents legal rules.
 
-## 🎯 Project Overview
+This system solves this by using a **Focused Per-Mark Analysis Strategy**:
+- Each prior mark is analyzed **individually** against the applied mark.
+- The LLM is provided with **static, hardcoded legal (TMEP) sections**, completely removing retrieval errors.
+- Context is strictly capped at ~200-500 tokens per call.
+- Mathematical risk scoring is handled entirely by Python, not the LLM. 
 
-This system provides **comprehensive risk assessment** for trademark applications by analyzing them against USPTO TMEP guidelines using a **multi-dimensional framework** that explains what creates risk, how to overcome it, and how confident the AI is.
+By strictly isolating the LLM's role to generating reasoning text based on tiny, perfectly accurate context windows, the system achieves near-zero hallucination rates.
 
-### ✨ Key Features
+## Evolution from v1.0 (RAG) to v2.0 (Focused Analysis)
 
-✅ **Zero-Hallucination Citations** - Every TMEP reference validated  
-✅ **Multi-Dimensional Risk Scoring** - 4 weighted dimensions  
-✅ **Confidence-Aware AI** - Auto-escalates at <60% confidence  
-✅ **RAG Architecture** - 41 TMEP sections with semantic search  
-✅ **Dual Input Mode** - Manual form entry OR direct PDF report upload  
-✅ **Complete Pipeline** - PDF parsing → Analysis → Actionable insights  
-✅ **Professional Reports** - Cost/timeline estimates included  
+Based on initial testing and architectural feedback, the system underwent a major overhaul to specifically eliminate hallucinations. The previous iteration (v1.0) relied on a standard Retrieval-Augmented Generation (RAG) pipeline:
+- **The v1 Problem:** RAG retrieved multiple TMEP sections via FAISS and passed them to the LLM alongside 120+ prior marks at once. This "context overfeeding" (~5000+ tokens) caused the LLM to cross-contaminate facts between marks and hallucinate non-existent legal rules.
+- **The v2 Solution:** RAG was completely removed in favor of a **Deterministic, Per-Mark** architecture. The system now uses 20 hardcoded, pre-verified TMEP sections. The LLM analyzes exactly ONE prior mark per API call, constrained by strict Python-based mathematical scoring frameworks (`risk_framework.py`).
 
----
 
-## 🖼️ Screenshots
+## Screenshots
 
-### 1. Input Interface (Manual Entry or PDF Upload)
-![Input Form](docs/images/screenshot1_form.png)
+<div align="center">
+  <img src="docs/images/img1.png" alt="Dashboard Overview" width="48%">
+  <img src="docs/images/img2.png" alt="Per-Mark Analysis" width="48%">
+</div>
+<br>
+<div align="center">
+  <img src="docs/images/img3.png" alt="Risk Dimensions Breakdown" width="48%">
+  <img src="docs/images/img4.png" alt="Detailed Issue Findings" width="48%">
+</div>
 
-### 2. Risk Assessment
-![Risk Overview](docs/images/screenshot2_risk.png)
+## Setup Instructions
 
-### 3. Detailed Analysis  
-![Issues](docs/images/screenshot3_issues.png)
+### Prerequisites
 
-### 4. Recommendations
-![Results](docs/images/screenshot4_recommendations.png)
+- Python 3.10+
+- Node.js 18+
+- [Ollama](https://ollama.ai/) with `llama3.1:8b` model
 
----
-
-## 🚀 Installation & Setup
-
-### System Requirements
-
-**Hardware:**
-- CPU: Modern multi-core processor (Intel i5/AMD Ryzen 5 or better)
-- RAM: 16GB minimum (8GB may work but not recommended)
-- Storage: 10GB free space (for models and data)
-- OS: Windows 10/11, macOS 10.15+, or Linux (Ubuntu 20.04+)
-
-**Software:**
-- Python 3.10 or higher
-- Node.js 18.0 or higher
-- npm 9.0 or higher
-- Git
-
-### Step-by-Step Installation
-
-#### Step 1: Clone the Repository
+### 1. Backend Setup
 
 ```bash
-git clone https://github.com/080abhinav/trademark-ai.git
-cd trademark-ai
+cd backend
+pip install fastapi uvicorn requests python-multipart PyPDF2
 ```
 
-#### Step 2: Backend Setup
-
-1. **Navigate to backend directory:**
-   ```bash
-   cd backend
-   ```
-
-2. **Create Python virtual environment:**
-   ```bash
-   python -m venv venv
-   ```
-
-3. **Activate virtual environment:**
-   
-   **Windows:**
-   ```bash
-   venv\Scripts\activate
-   ```
-   
-   **macOS/Linux:**
-   ```bash
-   source venv/bin/activate
-   ```
-
-4. **Install Python dependencies:**
-   ```bash
-   pip install --upgrade pip
-   pip install -r requirements.txt
-   ```
-   
-   This installs:
-   - FastAPI (web framework)
-   - Uvicorn (ASGI server)
-   - LangChain (LLM framework)
-   - sentence-transformers (embeddings)
-   - FAISS (vector database)
-   - PyPDF2 (PDF parsing)
-   - pandas, numpy (data processing)
-
-5. **Verify installation:**
-   ```bash
-   python -c "import fastapi; print('FastAPI OK')"
-   python -c "import faiss; print('FAISS OK')"
-   ```
-
-#### Step 3: Install Ollama (LLM Runtime)
-
-1. **Download Ollama:**
-   
-   Visit [https://ollama.ai](https://ollama.ai) and download for your OS:
-   - Windows: ollama-windows-amd64.exe
-   - macOS: ollama-darwin-arm64.pkg
-   - Linux: `curl https://ollama.ai/install.sh | sh`
-
-2. **Install Ollama:**
-   
-   Run the downloaded installer and follow prompts.
-
-3. **Verify Ollama installation:**
-   ```bash
-   ollama --version
-   ```
-
-4. **Pull the LLM model (llama3.1:8b - 4.7GB download):**
-   ```bash
-   ollama pull llama3.1:8b
-   ```
-   
-   This will take 5-15 minutes depending on your internet speed.
-
-5. **Verify model installation:**
-   ```bash
-   ollama list
-   ```
-   
-   You should see `llama3.1:8b` in the list.
-
-#### Step 4: Build TMEP Knowledge Base
-
-1. **Create initial TMEP data (curated 11 sections):**
-   ```bash
-   python create_tmep_data.py
-   ```
-   
-   Expected output:
-   ```
-   ✅ Created 11 TMEP sections
-   ✅ Citation validation map with 11 entries
-   ✅ Files saved to app/data/tmep/
-   ```
-
-2. **Build vector database:**
-   ```bash
-   python build_vector_db.py
-   ```
-   
-   Expected output:
-   ```
-   ✅ FAISS index built with 11 vectors
-   ✅ Vector metadata saved
-   ✅ Test query successful
-   ```
-
-3. **Run system tests:**
-   ```bash
-   python test_system.py
-   ```
-   
-   Expected output:
-   ```
-   🎉 ALL TESTS PASSED!
-   ✅ TMEP Knowledge Base (11 sections)
-   ✅ Vector Database (FAISS)
-   ✅ RAG Pipeline working
-   ```
-
-#### Step 5: (Optional) Add Official TMEP Sections
-
-If you have the official TMEP PDF files (30 files, 1,581 pages):
-
-1. **Place TMEP PDFs in data folder:**
-   ```bash
-   # Ensure PDFs are in: trademark-ai/data/tmep-nov2025-pdf/
-   ```
-
-2. **Parse official TMEP PDFs:**
-   ```bash
-   python parse_official_tmep.py
-   ```
-   
-   This takes 5-10 minutes and creates 30 additional sections.
-
-3. **Rebuild vector database with all sections:**
-   ```bash
-   python rebuild_vector_db.py
-   ```
-   
-   Expected output:
-   ```
-   ✅ Total sections: 41
-   ✅ Enhanced vector database ready!
-   ```
-
-#### Step 6: Start Backend Server
-
-1. **Ensure Ollama is running:**
-   
-   Ollama should start automatically on system boot. To verify:
-   ```bash
-   curl http://localhost:11434
-   ```
-   
-   If not running, start it:
-   ```bash
-   ollama serve
-   ```
-
-2. **Start FastAPI backend:**
-   ```bash
-   python main.py
-   ```
-   
-   Expected output:
-   ```
-   🚀 Starting Trademark Risk Assessment API...
-   INFO: Uvicorn running on http://0.0.0.0:8000
-   ```
-
-3. **Verify API is working:**
-   
-   Open browser to: `http://localhost:8000/docs`
-   
-   You should see interactive API documentation (Swagger UI).
-
-4. **Test health endpoint:**
-   ```bash
-   curl http://localhost:8000/api/health
-   ```
-   
-   Expected response:
-   ```json
-   {
-     "status": "healthy",
-     "components": {
-       "risk_framework": "operational",
-       "rag_analyzer": "operational",
-       "document_parser": "operational"
-     }
-   }
-   ```
-
-**Backend is now running!** Keep this terminal open.
-
-#### Step 7: Frontend Setup
-
-1. **Open a new terminal and navigate to frontend:**
-   ```bash
-   cd trademark-ai/frontend
-   ```
-
-2. **Install Node.js dependencies:**
-   ```bash
-   npm install
-   ```
-   
-   This installs:
-   - React 18
-   - Vite (build tool)
-   - Axios (HTTP client)
-   - Recharts (data visualization)
-
-3. **Start development server:**
-   ```bash
-   npm run dev
-   ```
-   
-   Expected output:
-   ```
-   VITE v7.3.1  ready in 381 ms
-   ➜  Local:   http://localhost:5173/
-   ```
-
-4. **Open application:**
-   
-   Open browser to: `http://localhost:5173`
-
-**Application is now fully running!** 🎉
-
----
-
-## 🧪 Verification
-
-### Test the Complete System
-
-1. **Open frontend:** `http://localhost:5173`
-
-2. **Test Manual Entry mode:**
-   - Ensure "✏️ Manual Entry" tab is active (default)
-   - Trademark: `TEAR, POUR, LIVE MORE`
-   - Classes: `5, 32`
-   - Goods/Services: `Energy drinks, sports drinks, dietary supplements`
-   - Prior Marks: `LIVEMORE, 5234567`
-   - Click **"Analyze Trademark"**
-
-3. **Test PDF Upload mode:**
-   - Switch to "📄 Upload PDF Report" tab
-   - Drag-and-drop or browse for a trademark search report PDF
-   - Click **"Analyze PDF Report"**
-   - Verify the parsed data preview banner appears above results
-
-4. **Expected results (45-60 seconds):**
-   - Risk Level: HIGH or MODERATE
-   - Risk Score: ~60-70/100
-   - Confidence: ~80-85%
-   - 4 issues identified
-   - Cost estimate: $7,000-$11,000
-   - Timeline: 7-10 months
-
-### API Testing (Alternative)
-
-Test the API directly using curl:
+### 2. Start Ollama
 
 ```bash
-# Manual analysis
-curl -X POST http://localhost:8000/api/analyze \
-  -H "Content-Type: application/json" \
-  -d '{
-    "mark": "TEAR, POUR, LIVE MORE",
-    "goods_services": "Energy drinks, sports drinks, dietary supplements",
-    "classes": [5, 32],
-    "prior_marks": [{"name": "LIVEMORE", "registration": "5234567"}]
-  }'
-
-# PDF-based analysis
-curl -X POST http://localhost:8000/api/analyze-pdf \
-  -F "file=@/path/to/trademark-report.pdf"
-```
-
----
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-**Issue:** `ModuleNotFoundError: No module named 'fastapi'`  
-**Solution:** Activate virtual environment and reinstall requirements:
-```bash
-venv\Scripts\activate  # Windows
-pip install -r requirements.txt
-```
-
-**Issue:** `Connection refused to localhost:11434`  
-**Solution:** Ollama is not running. Start it:
-```bash
+ollama pull llama3.1:8b
 ollama serve
 ```
 
-**Issue:** `Model 'llama3.1:8b' not found`  
-**Solution:** Pull the model:
+### 3. Start Backend
+
 ```bash
-ollama pull llama3.1:8b
+cd backend
+python main.py
 ```
 
-**Issue:** Frontend shows blank page  
-**Solution:** Check browser console (F12) for errors. Common fix:
+Server runs on http://localhost:8000 — API docs at http://localhost:8000/docs
+
+### 4. Frontend Setup
+
 ```bash
 cd frontend
-rm -rf node_modules package-lock.json
 npm install
 npm run dev
 ```
 
-**Issue:** Analysis takes very long (>2 minutes)  
-**Solution:** 
-- Check CPU usage (should be 80-100% during analysis)
-- Verify Ollama is using correct model: `ollama list`
-- System may need more RAM (16GB minimum recommended)
+Frontend runs on http://localhost:5173
 
-**Issue:** CORS errors in browser console  
-**Solution:** Verify backend is running on port 8000:
-```bash
-curl http://localhost:8000/api/health
-```
-
-### Getting Help
-
-If you encounter issues:
-1. Review logs in terminal where backend is running
-2. Check browser console (F12) for frontend errors
-3. Verify all system requirements are met
-
----
-
-
-## 🔒 Security Notes
-
-- System runs entirely locally (no external API calls)
-- No data is stored between sessions
-- All analysis is ephemeral
-- For production: Add authentication, rate limiting, input validation
-
----
-
-## 📊 Performance Expectations
-
-**Analysis Speed:** 45-60 seconds per trademark  
-**PDF Parsing Speed:** 2-5 seconds for document extraction  
-**Accuracy:** 84% risk level prediction (tested on 50 cases)  
-**Citation Validity:** 100% (zero hallucinations)  
-**Resource Usage:** 8-10GB RAM during analysis
-
----
-
-## 📊 Sample Output
-
-**Mark:** TEAR, POUR, LIVE MORE  
-**Risk:** HIGH (64.5/100) | Confidence: 81.5%  
-**Cost:** $7,750-$11,625 | Timeline: 7-10 months  
-**Issues:** 4 identified with TMEP citations  
-
-See [methodology.md](docs/methodology.md) for detailed framework explanation.
-
----
-
-## 📁 Project Structure
-
-```
-trademark-ai/
-├── backend/
-│   ├── main.py              # FastAPI API (3 endpoints: analyze, analyze-pdf, upload)
-│   ├── rag_analyzer.py      # RAG engine (vector search + LLM)
-│   ├── risk_framework.py    # Multi-dimensional risk scoring
-│   ├── document_parser.py   # PDF parsing (CompuMark, USPTO reports)
-│   └── app/data/            # TMEP sections + vector DB
-├── frontend/
-│   └── src/
-│       ├── App.jsx           # Main UI (dual input mode: form + PDF upload)
-│       └── index.css         # Styles
-├── data/                     # TMEP PDFs + Sample reports
-├── docs/                     # Documentation + Screenshots
-└── analysis/reports/         # Generated assessments
-```
-
----
-
-## 🧪 Testing
+### 5. Test the System
 
 ```bash
+cd backend
 python test_system.py
-# ✅ 41 TMEP sections loaded
-# ✅ Vector DB operational
-# ✅ Citation validation: 100%
 ```
 
----
+Validates: TMEP knowledge base, citation validation, prompt size control, deterministic overrides.
 
-## 📚 Documentation
+## Usage
 
-- **[methodology.md](docs/methodology.md)** - Risk framework details
-- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - System design
-- **[Report](docs/RISK_ASSESSMENT_REPORT.md)** - Risk Assessment Report
-- **[PRESENTATION.pptx](docs/AI-Powered_Trademark_Risk_Assessment_System.pptx.pptx)** - Presentation 
+### Option 1: Manual Input
+Enter trademark name, goods/services, classes, and known prior marks.
 
+### Option 2: PDF Upload
+Upload a CompuMark or USPTO trademark search report (PDF). The system parses the document, extracts prior marks, and analyzes each one individually.
 
+## Architecture
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed system design.
+
+**Key innovation**: Each prior mark is analyzed independently against focused TMEP guidance, preventing the LLM overfeeding that caused hallucination in v1.0.
+
+## Risk Categorization
+
+See [docs/methodology.md](docs/methodology.md) for the complete risk categorization framework.
+
+**Risk Levels**: CRITICAL → HIGH → MODERATE → LOW → MINIMAL
+**Confidence Scoring**: 0-100% with human review triggers below 60%
+
+## Project Structure
+
+```
+backend/
+  main.py              # FastAPI server (REST API)
+  tmep_knowledge.py    # 20 hardcoded TMEP sections
+  focused_analyzer.py  # Per-mark analysis (anti-hallucination)
+  risk_framework.py    # Multi-dimensional risk scoring
+  document_parser.py   # PDF parsing (CompuMark, TESS)
+  test_system.py       # System validation tests
+
+frontend/
+  src/App.jsx          # React UI with per-mark breakdown
+  src/index.css        # Styles
+
+docs/
+  ARCHITECTURE.md      # System architecture
+  methodology.md       # Risk categorization framework
+  RISK_ASSESSMENT_REPORT.md  # Sample analysis report
+```
+
+## The 6 Layers of Anti-Hallucination Defense
+
+1. **Pre-loaded Knowledge Base (Static)**: The LLM is never asked to recall law from its weights. 20 highly relevant TMEP sections are hardcoded into the system and injected directly into the prompt.
+2. **Per-Mark Isolation**: Prior marks are analyzed individually (one per LLM call) rather than collectively. This strictly prevents cross-contamination and "overfeeding" the context window.
+3. **Deterministic Scoring & Overrides**: The LLM only generates reasoning text. Risk scores and timelines are calculated by deterministic Python code (`risk_framework.py`). Critical risks (like exact name matches) and Fanciful marks (no English words) trigger deterministic overrides that bypass LLM judgment entirely.
+4. **Fanciful Mark Detection**: A pre-check scans marks against a dictionary of 150+ common English words. Marks with no recognizable words are automatically classified as Fanciful (LOW risk), entirely preventing the LLM from hallucinating meaningless vitality/energy concepts for random strings. 
+5. **Classification-Risk Consistency Checks**: The system parses the LLM's structured output and checks for logical contradictions. If the LLM classifies a mark as `SUGGESTIVE` but assigns a `HIGH` risk, the system overrides the risk to `LOW` and lowers confidence to flag it for human review.
+6. **Citation Validation Regex**: Before reasoning text is displayed, an automated regex scanner identifies any TMEP sections the LLM cited (e.g., `§ 1209.04(b)`). It checks these against the known 20 sections. Any hallucinated sections append an automated `[⚠️ WARNING]` to the reasoning text.

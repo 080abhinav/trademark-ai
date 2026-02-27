@@ -21,7 +21,7 @@ body {
   border-radius: 8px;
   padding: 24px;
   margin-bottom: 24px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .btn-primary {
@@ -45,7 +45,8 @@ body {
   cursor: not-allowed;
 }
 
-input, textarea {
+input,
+textarea {
   width: 100%;
   padding: 10px;
   border: 1px solid #d1d5db;
@@ -69,16 +70,44 @@ label {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
-.risk-critical { background: #fef2f2; border: 2px solid #ef4444; color: #dc2626; }
-.risk-high { background: #fff7ed; border: 2px solid #f97316; color: #ea580c; }
-.risk-moderate { background: #fef9c3; border: 2px solid #eab308; color: #ca8a04; }
-.risk-low { background: #dbeafe; border: 2px solid #3b82f6; color: #2563eb; }
-.risk-minimal { background: #dcfce7; border: 2px solid #22c55e; color: #16a34a; }
+.grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.risk-critical {
+  background: #fef2f2;
+  border: 2px solid #ef4444;
+  color: #dc2626;
+}
+
+.risk-high {
+  background: #fff7ed;
+  border: 2px solid #f97316;
+  color: #ea580c;
+}
+
+.risk-moderate {
+  background: #fef9c3;
+  border: 2px solid #eab308;
+  color: #ca8a04;
+}
+
+.risk-low {
+  background: #dbeafe;
+  border: 2px solid #3b82f6;
+  color: #2563eb;
+}
+
+.risk-minimal {
+  background: #dcfce7;
+  border: 2px solid #22c55e;
+  color: #16a34a;
+}
 
 .header {
   background: white;
   padding: 24px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   margin-bottom: 24px;
 }
 
@@ -100,7 +129,7 @@ label {
 }
 
 .issue-card:hover {
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .badge {
