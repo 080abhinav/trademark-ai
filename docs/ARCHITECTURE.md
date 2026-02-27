@@ -30,20 +30,27 @@ Traditional LLM applications retrieve multiple documents per query and feed thou
               │
               ▼
 ┌─────────────────────────────────────────────────────┐
-│           Focused Analyzer (per-mark)               │
+│           Smart Pre-Filter (Python)                 │
+│  • 100% Deterministic string/class matching         │
+│  • Instantly scores ~90% of marks as HIGH/LOW       │
+└─────────────┬───────────────────────────────────────┘
+              │ (Only passes ambiguous marks)
+              ▼
+┌─────────────────────────────────────────────────────┐
+│           Focused Analyzer (LLM)                    │
 │                                                     │
-│  For EACH prior mark (individually):                │
+│  For remaining ambiguous marks (in parallel):       │
 │  ┌─────────────────────────────────────────┐        │
-│  │ Prior Mark #1: "POUR MORE"              │        │
+│  │ Prior Mark #1: "POUR MORE" (Class 32)   │        │
 │  │ + TMEP §1207.01(b)(i) (~200 tokens)     │        │
 │  │ → LLM: SIMILAR=YES, RISK=HIGH           │        │
 │  └─────────────────────────────────────────┘        │
 │  ┌─────────────────────────────────────────┐        │
-│  │ Prior Mark #2: "LIVE WELL"              │        │
+│  │ Prior Mark #2: "LIVE WELL" (Class 5)    │        │
 │  │ + TMEP §1207.01(b)(i) (~200 tokens)     │        │
 │  │ → LLM: SIMILAR=NO, RISK=LOW             │        │
 │  └─────────────────────────────────────────┘        │
-│  ... (each mark analyzed independently)             │
+│  ... (asyncio concurrent execution)                 │
 │                                                     │
 │  Then: Descriptiveness (§1209), Specimens (§904),   │
 │        Filing basis (§806), Identification (§1402)  │
@@ -101,6 +108,11 @@ Per-mark analysis architecture:
 | `analyze_specimen_issues()` | Classes | §904 only | Specimen compliance (fanciful-aware) |
 | `analyze_filing_issues()` | Basis | §806 only | Filing basis compliance (ITU context-aware) |
 | `analyze_identification_issues()` | Goods text | §1402 only | ID acceptability |
+
+
+**Smart Prior-Mark Pre-Filtering:**
+Before calling the LLM for 120 prior marks, a Python deterministic filter categorizes exact matches as HIGH risk and zero-overlap marks as LOW risk. The LLM is only called for the ~10% of marks that are truly ambiguous, drastically reducing API costs and latency.
+
 
 **The 6-Layer Anti-Hallucination Architecture:**
 1. **Pre-loaded Knowledge Base (Static)**: 20 hardcoded TMEP sections injected as context, no retrieving from LLM memory.

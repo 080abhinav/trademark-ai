@@ -36,52 +36,78 @@ Based on initial testing and architectural feedback, the system underwent a majo
 ## Setup Instructions
 
 ### Prerequisites
+- **Python 3.10+**
+- **Node.js 18+**
+- **[Ollama](https://ollama.ai/)** (Required for local LLM inference)
 
-- Python 3.10+
-- Node.js 18+
-- [Ollama](https://ollama.ai/) with `llama3.1:8b` model
+---
 
-### 1. Backend Setup
-
+### Step 1: Clone the Repository
+Open a terminal and clone the source code to your local machine:
 ```bash
-cd backend
-pip install fastapi uvicorn requests python-multipart PyPDF2
+git clone https://github.com/080abhinav/trademark-ai.git
+cd trademark-ai
 ```
 
-### 2. Start Ollama
+---
 
+### Step 2: Start the Local LLM (Ollama)
+This system relies on a local LLM to guarantee privacy. You must have Ollama running.
+Open a terminal and pull the AI model (this may take a few minutes):
 ```bash
 ollama pull llama3.1:8b
+```
+Ensure the Ollama service is running in the background:
+```bash
 ollama serve
 ```
 
-### 3. Start Backend
+---
+
+### Step 3: Set up the Python Backend
+Open a *new* terminal, navigate to the root of the project, and configure the Python API:
 
 ```bash
 cd backend
+
+# Create and activate a virtual environment (Recommended)
+python -m venv venv
+# On Windows: venv\Scripts\activate
+# On Mac/Linux: source venv/bin/activate
+
+# Install required packages
+pip install fastapi uvicorn requests python-multipart PyPDF2
+
+# Start the API server
 python main.py
 ```
+*The backend should now be running at `http://localhost:8000`. You can view the API documentation at `http://localhost:8000/docs`.*
 
-Server runs on http://localhost:8000 — API docs at http://localhost:8000/docs
+---
 
-### 4. Frontend Setup
+### Step 4: Set up the React Frontend
+Open a *third* terminal, navigate to the root of the project, and start the UI:
 
 ```bash
 cd frontend
+
+# Install Node modules dependencies
 npm install
+
+# Start the development server
 npm run dev
 ```
+*The frontend will open in your browser automatically, or you can visit `http://localhost:5173`.*
 
-Frontend runs on http://localhost:5173
+---
 
-### 5. Test the System
-
+### Step 5: Run Automated Tests
+To verify the system's anti-hallucination logic is working correctly:
 ```bash
 cd backend
 python test_system.py
 ```
 
-Validates: TMEP knowledge base, citation validation, prompt size control, deterministic overrides.
 
 ## Usage
 

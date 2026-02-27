@@ -27,9 +27,12 @@ To prevent LLM context overfeeding and hallucination, our system analyzes **each
 
 ### 1. Likelihood of Confusion (Most Critical)
 
-**Deterministic Overrides (no LLM needed):**
-- **CRITICAL**: Applied mark literally contains a prior mark name (e.g., "POUR" in "TEAR, POUR, LIVE MORE") — per TMEP §1207.01(d)
-- **HIGH**: Name containment + class overlap — both marks in same International Class
+**Smart Pre-Filtering & Deterministic Overrides (No LLM needed):**
+To eliminate unnecessary API costs and latency, the system uses a Python-based deterministic filter *before* calling the LLM. It automatically categorizes ~90% of prior marks based on exact text and class overlap:
+- **CRITICAL / HIGH Risk (Skip LLM)**: Applied mark exactly matches or literally contains a prior mark name (TMEP §1207.01(d)).
+- **MEDIUM Risk (Skip LLM)**: Marks share exactly 1 word, but exist in completely non-overlapping International Classes.
+- **LOW Risk (Skip LLM)**: Marks share exactly 0 words and have no meaningful string overlap.
+- **AMBIGUOUS (Requires LLM)**: Marks share 2+ words, or share 1 word in the exact same class. Only these borderline marks trigger an async API call for deeper semantic review.
 
 **LLM-Assisted Assessment (per-mark):**
 Each prior mark is compared against the applied-for mark using DuPont factors (TMEP §1207.01(b)):
