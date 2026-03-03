@@ -11,7 +11,7 @@ function App() {
     mark: 'TEAR, POUR, LIVE MORE',
     goods_services: 'Energy drinks, sports drinks, dietary supplements',
     classes: '5, 32',
-    prior_marks: 'LIVEMORE, 5234567\nPOURMORE, 6123456'
+    prior_marks: 'LIVEMORE, 5234567, 5\nPOURMORE, 6123456, 32'
   });
 
   // PDF upload state
@@ -48,7 +48,10 @@ function App() {
           const parts = line.split(',').map(s => s.trim());
           return {
             name: parts[0] || '',
-            registration: parts[1] || ''
+            registration: parts[1] || '',
+            classes: parts[2]
+              ? parts[2].split(/[\s\/]+/).map(c => parseInt(c.trim())).filter(c => !isNaN(c))
+              : []
           };
         }).filter(m => m.name)
         : [];
@@ -181,7 +184,7 @@ function App() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #f8fafc, #e0f2fe)' }}>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #000000ff, #002239ff)' }}>
       {/* Header */}
       <div className="header">
         <div className="container">
@@ -250,12 +253,12 @@ function App() {
               </div>
 
               <div style={{ marginTop: '16px' }}>
-                <label>Prior Marks (optional, one per line: NAME, REGISTRATION)</label>
+                <label>Prior Marks (optional, one per line: NAME, REGISTRATION, CLASS)</label>
                 <textarea
                   value={formData.prior_marks}
                   onChange={(e) => setFormData({ ...formData, prior_marks: e.target.value })}
                   rows="3"
-                  placeholder="LIVEMORE, 5234567&#10;POURMORE, 6123456"
+                  placeholder="LIVEMORE, 5234567, 5&#10;POURMORE, 6123456, 32"
                 />
               </div>
 
@@ -339,12 +342,12 @@ function App() {
         {loading && (
           <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
             <h3>{inputMode === 'pdf' ? 'Parsing & Analyzing PDF...' : 'Analyzing Trademark...'}</h3>
-            <p style={{ color: '#6b7280', marginTop: '8px' }}>
+            <p style={{ color: '#94a3b8', marginTop: '8px' }}>
               {inputMode === 'pdf'
                 ? 'Extracting data and analyzing each prior mark individually. This may take a few minutes for large reports...'
                 : 'Analyzing each prior mark individually against TMEP guidelines. Please wait...'}
             </p>
-            <p style={{ color: '#9ca3af', marginTop: '12px', fontSize: '13px' }}>
+            <p style={{ color: '#64748b', marginTop: '12px', fontSize: '13px' }}>
               Anti-hallucination: each prior mark is analyzed separately with focused TMEP context
             </p>
           </div>
@@ -398,7 +401,7 @@ function App() {
                 <h3 style={{ fontSize: '18px', marginBottom: '8px' }}>
                   Per-Mark Confusion Analysis
                 </h3>
-                <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>
+                <p style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '16px' }}>
                   Each prior mark analyzed individually against TMEP guidelines — prevents LLM overfeeding and hallucination
                 </p>
 
@@ -406,32 +409,32 @@ function App() {
                 <div className="grid grid-3" style={{ gap: '12px', marginBottom: '20px' }}>
                   <div style={{
                     textAlign: 'center', padding: '14px',
-                    background: analysis.high_risk_count > 0 ? '#fef2f2' : '#f0fdf4',
+                    background: analysis.high_risk_count > 0 ? '#2a0000' : '#0a2e12',
                     borderRadius: '8px',
-                    border: `1px solid ${analysis.high_risk_count > 0 ? '#fca5a5' : '#bbf7d0'}`
+                    border: `1px solid ${analysis.high_risk_count > 0 ? '#ef4444' : '#22c55e'}`
                   }}>
-                    <p style={{ fontSize: '28px', fontWeight: 'bold', color: '#dc2626' }}>
+                    <p style={{ fontSize: '28px', fontWeight: 'bold', color: '#f1f5f9' }}>
                       {analysis.high_risk_count || 0}
                     </p>
-                    <p style={{ fontSize: '13px', color: '#6b7280' }}>HIGH Risk</p>
+                    <p style={{ fontSize: '13px', color: '#94a3b8' }}>HIGH Risk</p>
                   </div>
                   <div style={{
-                    textAlign: 'center', padding: '14px', background: '#fffbeb',
-                    borderRadius: '8px', border: '1px solid #fcd34d'
+                    textAlign: 'center', padding: '14px', background: '#1a1a00',
+                    borderRadius: '8px', border: '1px solid #eab308'
                   }}>
                     <p style={{ fontSize: '28px', fontWeight: 'bold', color: '#f59e0b' }}>
                       {analysis.medium_risk_count || 0}
                     </p>
-                    <p style={{ fontSize: '13px', color: '#6b7280' }}>MEDIUM Risk</p>
+                    <p style={{ fontSize: '13px', color: '#94a3b8' }}>MEDIUM Risk</p>
                   </div>
                   <div style={{
-                    textAlign: 'center', padding: '14px', background: '#f0fdf4',
-                    borderRadius: '8px', border: '1px solid #bbf7d0'
+                    textAlign: 'center', padding: '14px', background: '#001a0a',
+                    borderRadius: '8px', border: '1px solid #22c55e'
                   }}>
                     <p style={{ fontSize: '28px', fontWeight: 'bold', color: '#16a34a' }}>
                       {analysis.low_risk_count || 0}
                     </p>
-                    <p style={{ fontSize: '13px', color: '#6b7280' }}>LOW Risk</p>
+                    <p style={{ fontSize: '13px', color: '#94a3b8' }}>LOW Risk</p>
                   </div>
                 </div>
 
@@ -440,10 +443,10 @@ function App() {
                   onClick={() => setShowPerMarkSection(!showPerMarkSection)}
                   style={{
                     width: '100%', padding: '12px 16px',
-                    background: showPerMarkSection ? '#f3f4f6' : 'linear-gradient(135deg, #eff6ff, #f0f9ff)',
-                    border: '1px solid #d1d5db', borderRadius: '8px',
+                    background: showPerMarkSection ? '#1e293b' : 'linear-gradient(135deg, rgba(59,130,246,0.1), rgba(99,102,241,0.1))',
+                    border: '1px solid #334155', borderRadius: '8px',
                     cursor: 'pointer', fontSize: '14px', fontWeight: '600',
-                    color: '#374151', display: 'flex', justifyContent: 'space-between',
+                    color: '#cbd5e1', display: 'flex', justifyContent: 'space-between',
                     alignItems: 'center', marginBottom: showPerMarkSection ? '14px' : '0',
                     transition: 'all 0.2s ease'
                   }}
@@ -451,7 +454,7 @@ function App() {
                   <span>
                     {showPerMarkSection ? 'Hide' : 'Show'} {analysis.per_mark_results.length} Individual Mark Results
                   </span>
-                  <span style={{ fontSize: '12px', color: '#6b7280' }}>
+                  <span style={{ fontSize: '12px', color: '#94a3b8' }}>
                     {showPerMarkSection ? '▲ Collapse' : '▼ Expand'}
                   </span>
                 </button>
@@ -468,7 +471,7 @@ function App() {
                         border: `1px solid ${badge.border}`,
                         borderRadius: '8px',
                         overflow: 'hidden',
-                        background: '#fff',
+                        background: '#1e293b',
                       }}
                     >
                       {/* Header row (always visible) */}
@@ -477,8 +480,8 @@ function App() {
                         style={{
                           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                           padding: '12px 16px', cursor: 'pointer',
-                          background: mark.confusion_risk === 'HIGH' ? '#fef2f2'
-                            : mark.confusion_risk === 'MEDIUM' ? '#fffbeb' : '#f0fdf4'
+                          background: mark.confusion_risk === 'HIGH' ? 'rgba(239,68,68,0.1)'
+                            : mark.confusion_risk === 'MEDIUM' ? 'rgba(234,179,8,0.1)' : 'rgba(34,197,94,0.1)'
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
@@ -494,9 +497,28 @@ function App() {
                           <span style={{ fontWeight: '600', fontSize: '15px' }}>
                             {mark.prior_mark_name}
                           </span>
+                          {/* Tier badge — uses structured tier_resolved field */}
+                          {mark.tier_resolved === 'tier1_2' && (
+                            <span style={{
+                              background: 'rgba(59,130,246,0.2)', color: '#93c5fd',
+                              padding: '2px 8px', borderRadius: '8px',
+                              fontSize: '11px', fontWeight: '600'
+                            }}>
+                              ✨ TIER 1/2 FILTERED
+                            </span>
+                          )}
+                          {mark.tier_resolved === 'tier3' && (
+                            <span style={{
+                              background: 'rgba(236,72,153,0.2)', color: '#f9a8d4',
+                              padding: '2px 8px', borderRadius: '8px',
+                              fontSize: '11px', fontWeight: '600'
+                            }}>
+                              🧠 TIER 3 LLM
+                            </span>
+                          )}
                           {mark.name_contained && (
                             <span style={{
-                              background: '#fee2e2', color: '#dc2626',
+                              background: 'rgba(239,68,68,0.2)', color: '#fca5a5',
                               padding: '2px 8px', borderRadius: '8px',
                               fontSize: '11px', fontWeight: '600'
                             }}>
@@ -504,16 +526,16 @@ function App() {
                             </span>
                           )}
                           {mark.prior_mark_reg_number && (
-                            <span style={{ color: '#9ca3af', fontSize: '12px' }}>
+                            <span style={{ color: '#64748b', fontSize: '12px' }}>
                               Reg. {mark.prior_mark_reg_number}
                             </span>
                           )}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <span style={{ fontSize: '12px', color: '#6b7280' }}>
+                          <span style={{ fontSize: '12px', color: '#94a3b8' }}>
                             {(mark.confidence * 100).toFixed(0)}% conf.
                           </span>
-                          <span style={{ fontSize: '12px', color: '#9ca3af' }}>
+                          <span style={{ fontSize: '12px', color: '#64748b' }}>
                             {isExpanded ? '\u25B2' : '\u25BC'}
                           </span>
                         </div>
@@ -521,34 +543,52 @@ function App() {
 
                       {/* Expanded detail */}
                       {isExpanded && (
-                        <div style={{ padding: '14px 16px', borderTop: '1px solid #e5e7eb' }}>
+                        <div style={{ padding: '14px 16px', borderTop: '1px solid #334155' }}>
+                          {/* Similarity scores from Tier 1 ML */}
+                          {mark.similarity_scores && (
+                            <div style={{ display: 'flex', gap: '8px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                              <span style={{ background: 'rgba(99,102,241,0.2)', color: '#a5b4fc', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold' }}>
+                                Phonetic: {(mark.similarity_scores.phonetic * 100).toFixed(0)}%
+                              </span>
+                              <span style={{ background: 'rgba(99,102,241,0.2)', color: '#a5b4fc', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold' }}>
+                                Semantic: {(mark.similarity_scores.semantic * 100).toFixed(0)}%
+                              </span>
+                              <span style={{ background: 'rgba(99,102,241,0.2)', color: '#a5b4fc', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold' }}>
+                                Visual: {(mark.similarity_scores.visual * 100).toFixed(0)}%
+                              </span>
+                              <span style={{ background: 'rgba(99,102,241,0.3)', color: '#a5b4fc', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold' }}>
+                                Composite: {(mark.similarity_scores.composite * 100).toFixed(0)}%
+                              </span>
+                            </div>
+                          )}
                           <div className="grid grid-2" style={{ gap: '8px', marginBottom: '10px' }}>
                             <div>
-                              <span style={{ fontSize: '12px', color: '#6b7280' }}>Prior Goods:</span>
+                              <span style={{ fontSize: '12px', color: '#94a3b8' }}>Prior Goods:</span>
                               <p style={{ fontSize: '13px' }}>{mark.prior_mark_goods || 'N/A'}</p>
                             </div>
                             <div>
-                              <span style={{ fontSize: '12px', color: '#6b7280' }}>Prior Classes:</span>
+                              <span style={{ fontSize: '12px', color: '#94a3b8' }}>Prior Classes:</span>
                               <p style={{ fontSize: '13px' }}>
                                 {mark.prior_mark_classes?.length > 0 ? mark.prior_mark_classes.join(', ') : 'N/A'}
                               </p>
                             </div>
                             <div>
-                              <span style={{ fontSize: '12px', color: '#6b7280' }}>Mark Similar:</span>
+                              <span style={{ fontSize: '12px', color: '#94a3b8' }}>Mark Similar:</span>
                               <p style={{ fontSize: '13px' }}>{mark.is_similar ? 'Yes' : 'No'}</p>
                             </div>
                             <div>
-                              <span style={{ fontSize: '12px', color: '#6b7280' }}>Goods Related:</span>
+                              <span style={{ fontSize: '12px', color: '#94a3b8' }}>Goods Related:</span>
                               <p style={{ fontSize: '13px' }}>{mark.is_related_goods ? 'Yes' : 'No'}</p>
                             </div>
                           </div>
                           <div style={{ marginBottom: '8px' }}>
-                            <span style={{ fontSize: '12px', color: '#6b7280' }}>Reasoning:</span>
+                            <span style={{ fontSize: '12px', color: '#94a3b8' }}>Reasoning:</span>
                             <p style={{ fontSize: '13px', lineHeight: '1.5' }}>{mark.reasoning}</p>
                           </div>
-                          <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: '#6b7280' }}>
+                          <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: '#94a3b8' }}>
                             <span>TMEP: {mark.tmep_section}</span>
                             <span>Key Factor: {mark.key_factor}</span>
+                            <span>Resolved by: {mark.tier_resolved === 'tier3' ? 'Tier 3 (LLM)' : 'Tier 1+2 (ML+Rules)'}</span>
                           </div>
                         </div>
                       )}
@@ -569,12 +609,12 @@ function App() {
                     { key: 'legal_precedent_strength', data: analysis.legal_precedent_strength, label: 'Legal Precedent' },
                     { key: 'examiner_discretion', data: analysis.examiner_discretion, label: 'Examiner Discretion' }
                   ].filter(dim => dim.data).map(({ key, data, label }) => (
-                    <div key={key} style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
+                    <div key={key} style={{ padding: '16px', border: '1px solid #334155', borderRadius: '8px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                         <strong>{data.name || label}</strong>
                         <span style={{ fontSize: '24px', fontWeight: 'bold' }}>{(data.score || 0).toFixed(0)}</span>
                       </div>
-                      <div style={{ width: '100%', height: '8px', background: '#e5e7eb', borderRadius: '4px', marginBottom: '8px' }}>
+                      <div style={{ width: '100%', height: '8px', background: '#334155', borderRadius: '4px', marginBottom: '8px' }}>
                         <div
                           style={{
                             width: `${data.score || 0}%`,
@@ -584,10 +624,10 @@ function App() {
                           }}
                         />
                       </div>
-                      <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+                      <p style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '8px' }}>
                         Weight: {((data.weight || 0) * 100).toFixed(0)}% | Confidence: {((data.confidence || 0) * 100).toFixed(0)}%
                       </p>
-                      <p style={{ fontSize: '14px', color: '#374151' }}>{data.explanation || ''}</p>
+                      <p style={{ fontSize: '14px', color: '#cbd5e1' }}>{data.explanation || ''}</p>
                     </div>
                   ))}
                 </div>
@@ -618,18 +658,18 @@ function App() {
                         </span>
                       </div>
                       {issue.description && (
-                        <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '12px' }}>
+                        <p style={{ fontSize: '14px', color: '#94a3b8', marginBottom: '12px' }}>
                           {issue.description}
                         </p>
                       )}
-                      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '14px', color: '#6b7280', marginBottom: '12px' }}>
+                      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '14px', color: '#94a3b8', marginBottom: '12px' }}>
                         <span>TMEP: {issue.tmep_section || 'N/A'}</span>
                         <span>Cost: {issue.estimated_cost || 'N/A'}</span>
                         <span>Timeline: {issue.estimated_time || 'N/A'}</span>
                       </div>
-                      <div style={{ padding: '12px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px' }}>
-                        <strong style={{ fontSize: '14px', color: '#1e40af' }}>Recommendation:</strong>
-                        <p style={{ fontSize: '14px', color: '#1e40af', margin: '4px 0 0 0' }}>
+                      <div style={{ padding: '12px', background: 'rgba(59,130,246,0.1)', border: '1px solid #1e3a8a', borderRadius: '6px' }}>
+                        <strong style={{ fontSize: '14px', color: '#93c5fd' }}>Recommendation:</strong>
+                        <p style={{ fontSize: '14px', color: '#93c5fd', margin: '4px 0 0 0' }}>
                           {issue.recommendation || 'Consult with trademark attorney'}
                         </p>
                       </div>
@@ -645,15 +685,15 @@ function App() {
                 <h3 style={{ fontSize: '18px', marginBottom: '16px' }}>Recommendations & Cost Estimate</h3>
 
                 {analysis.primary_recommendation && (
-                  <div style={{ padding: '16px', background: 'linear-gradient(to right, #eff6ff, #eef2ff)', border: '1px solid #bfdbfe', borderRadius: '8px', marginBottom: '16px' }}>
+                  <div style={{ padding: '16px', background: 'linear-gradient(to right, rgba(59,130,246,0.1), rgba(99,102,241,0.1))', border: '1px solid #1e3a8a', borderRadius: '8px', marginBottom: '16px' }}>
                     <p style={{ fontWeight: '600', marginBottom: '8px' }}>Primary Recommendation:</p>
-                    <p style={{ color: '#374151' }}>{analysis.primary_recommendation}</p>
+                    <p style={{ color: '#cbd5e1' }}>{analysis.primary_recommendation}</p>
                   </div>
                 )}
 
                 <div className="grid grid-2" style={{ marginBottom: '16px' }}>
                   {analysis.estimated_total_cost && (
-                    <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '16px' }}>
+                    <div style={{ border: '1px solid #334155', borderRadius: '8px', padding: '16px' }}>
                       <p style={{ fontWeight: '600', marginBottom: '8px' }}>Estimated Cost</p>
                       <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#059669' }}>
                         {analysis.estimated_total_cost}
@@ -662,7 +702,7 @@ function App() {
                   )}
 
                   {analysis.estimated_timeline && (
-                    <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '16px' }}>
+                    <div style={{ border: '1px solid #334155', borderRadius: '8px', padding: '16px' }}>
                       <p style={{ fontWeight: '600', marginBottom: '8px' }}>Estimated Timeline</p>
                       <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#2563eb' }}>
                         {analysis.estimated_timeline}
@@ -678,7 +718,7 @@ function App() {
                       {analysis.alternative_strategies.map((alt, idx) => (
                         <li key={idx} style={{ display: 'flex', alignItems: 'start', gap: '8px', marginBottom: '8px' }}>
                           <span style={{ color: '#16a34a', fontSize: '20px' }}>&#10003;</span>
-                          <span style={{ color: '#374151' }}>{alt}</span>
+                          <span style={{ color: '#cbd5e1' }}>{alt}</span>
                         </li>
                       ))}
                     </ul>

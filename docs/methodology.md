@@ -1,77 +1,82 @@
-# Risk Categorization Methodology
+# Risk Categorization Methodology v3.0
 
 ## Overview
 
-This document explains how the Trademark Risk Assessment System categorizes legal risks. The methodology is designed to be **defensible**, **explainable**, and strictly **anti-hallucination**.
+This document explains how the Trademark Risk Assessment System categorizes legal risks using a **3-Tier Pipeline** of ML scoring, deterministic rules, and constrained LLM reasoning. The methodology is **defensible**, **explainable**, and strictly **anti-hallucination**.
 
-## Core Principle: Per-Mark Analysis
+## Core Principle: 3-Tier Pipeline
 
-To prevent LLM context overfeeding and hallucination, our system analyzes **each prior mark individually** rather than feeding all prior marks into a single prompt. This means:
+```
+105 marks → Tier 1 (ML scores) → Tier 2 (Rules) → 68 filtered (~65% in benchmark)
+                                                  → 37 to Tier 3 (LLM) → ~35%
+```
 
-- Each confusion assessment is independent and verifiable.
-- No cross-contamination of facts between different prior marks.
-- The LLM receives ~200-500 tokens of highly focused legal context per analysis.
-- Every citation is validated against a pre-loaded knowledge base of 20 critical TMEP sections.
+> **Note:** The exact filter ratio depends on the dataset. Marks from a curated USPTO search report tend to have higher similarity, so fewer are filtered. Random marks would see a higher filter rate.
+
+- **Tier 1**: Computes phonetic, semantic, and visual similarity scores (combined into a weighted overall score).
+- **Tier 2**: Applies deterministic rules to classify obvious HIGH, MEDIUM, and LOW marks.
+- **Tier 3**: LLM analyzes only ambiguous marks — one at a time with structured output.
 
 ## Risk Levels
 
 | Level | Score Range | Description | Attorney Action |
 |-------|-----------|-------------|----------------|
-| **CRITICAL** | 75-100 | Near-certain refusal, major legal obstacles | Immediate review, consider abandoning or major modification |
-| **HIGH** | 60-74 | Likely refusal, significant issues | Formal legal opinion needed, consider alternatives |
-| **MODERATE** | 40-59 | Possible issues, examiner judgment involved | Monitor, prepare arguments, consider minor modifications |
-| **LOW** | 20-39 | Minor concerns, generally manageable | Standard prosecution, no major concerns |
-| **MINIMAL** | 0-19 | No significant issues identified | Proceed with confidence |
+| **CRITICAL** | 75-100 | Near-certain refusal | Immediate review, consider abandoning |
+| **HIGH** | 60-74 | Likely refusal | Formal legal opinion needed |
+| **MODERATE** | 40-59 | Possible issues | Monitor, prepare arguments |
+| **LOW** | 20-39 | Minor concerns | Standard prosecution |
+| **MINIMAL** | 0-19 | No significant issues | Proceed with confidence |
 
-## Risk Categorization Criteria
+## Tier 1 — ML Similarity Scoring
 
-### 1. Likelihood of Confusion (Most Critical)
+Each prior mark receives 4 scores computed by ML models:
 
-**Smart Pre-Filtering & Deterministic Overrides (No LLM needed):**
-To eliminate unnecessary API costs and latency, the system uses a Python-based deterministic filter *before* calling the LLM. It automatically categorizes ~90% of prior marks based on exact text and class overlap:
-- **CRITICAL / HIGH Risk (Skip LLM)**: Applied mark exactly matches or literally contains a prior mark name (TMEP §1207.01(d)).
-- **MEDIUM Risk (Skip LLM)**: Marks share exactly 1 word, but exist in completely non-overlapping International Classes.
-- **LOW Risk (Skip LLM)**: Marks share exactly 0 words and have no meaningful string overlap.
-- **AMBIGUOUS (Requires LLM)**: Marks share 2+ words, or share 1 word in the exact same class. Only these borderline marks trigger an async API call for deeper semantic review.
+| Score | Algorithm | What It Measures | Range |
+|-------|-----------|-----------------|-------|
+| **Phonetic** | Jaro-Winkler + Soundex | How marks sound when spoken | 0-100% |
+| **Semantic** | MiniLM-L6-v2 cosine similarity | Meaning and concept similarity | 0-100% |
+| **Visual** | Normalized Levenshtein distance | Character-level appearance | 0-100% |
 
-**LLM-Assisted Assessment (per-mark):**
-Each prior mark is compared against the applied-for mark using DuPont factors (TMEP §1207.01(b)):
-- **Mark Similarity**: Sound, appearance, meaning, commercial impression (§1207.01(b)(i))
-- **Goods Relatedness**: Same class, complementary goods, same trade channels (§1207.01(b)(ii))
-- **Key Factor**: Which DuPont factor is decisive for this specific pair
+These 3 scores are combined into a **weighted overall score** (35% phonetic + 35% semantic + 30% visual) used by Tier 2 rules.
 
-**Risk Assignment:**
-- **HIGH**: Marks share dominant element AND goods overlap
-- **MEDIUM**: Some similarity in marks OR some relatedness in goods
-- **LOW**: Marks clearly different OR goods unrelated
+**Score Interpretation:**
+- **0-30%**: Noise floor — no meaningful similarity
+- **30-55%**: Moderate — ambiguous territory
+- **55-75%**: High — likely confusion
+- **75%+**: Very high — near-identical marks
 
-### 2. Descriptiveness (§1209)
+**Component-Level Matching:**
+For asymmetric marks (short vs long), the system splits the longer mark into components and checks each against the shorter one. Example: "LIVEMORE" (1 word) vs "TEAR, POUR, LIVE MORE" (3 words) — "LIVEMORE" is found as a component, scoring 99% phonetic.
 
-**Classification Spectrum**: Generic → Descriptive → Suggestive → Arbitrary → Fanciful
+## Tier 2 — Deterministic Classification Rules
 
-**Risk Criteria:**
-- **HIGH**: Mark directly describes a key feature/ingredient/quality (e.g., "POUR" for beverages)
-- **MEDIUM**: Mark is in the grey zone between descriptive and suggestive
-- **LOW**: Mark is clearly suggestive, arbitrary, or fanciful
+### DROP_HIGH Rules (Template reasoning, no LLM)
+Obvious high-risk marks classified deterministically:
 
-### 3. Specimen Requirements (§904)
+| Rule | Condition | Reasoning |
+|------|-----------|-----------|
+| **H1** | Name contained + class overlap | Mark containment creates strong presumption of confusion (§1207.01(d)(i)) |
+| **H2** | Overall score ≥ 0.75 + class overlap | Extremely high similarity across all dimensions |
+| **H3** | Phonetic ≥ 0.90 + visual ≥ 0.80 | Near-identical sound and appearance |
+| **H4** | Semantic ≥ 0.80 + class overlap | Strong conceptual similarity with goods overlap |
 
-**Mostly Deterministic:**
-- **LOW** for physical goods (Class 5, Class 32): product labels/packaging are standard specimens
-- **MEDIUM** for digital/service marks: webpage specimens have specific requirements
-- **HIGH** only if no specimen is available
+### Other Rules
 
-### 4. Filing Basis (§806)
+| Rule | Condition | Verdict |
+|------|-----------|---------|
+| Name contained, no class overlap | Different markets reduce risk | DROP_MEDIUM |
+| Name contained, no class overlap | Different markets reduce risk | DROP_MEDIUM |
+| Overall score ≥ 0.65, no class overlap | Similar but different markets | DROP_MEDIUM |
+| Moderate similarity + class overlap | Ambiguous — needs LLM | PASS_TO_TIER3 |
+| Low overall score + semantic < 0.35 | Clearly different marks | DROP_LOW |
 
-**Fully Deterministic:**
-- §1(a) use-in-commerce: requires dates of use and specimens
-- §1(b) intent-to-use: requires bona fide intent, SOU before registration
+## Tier 3 — LLM Reasoning
 
-### 5. Identification of Goods/Services (§1402)
-
-**LLM-Assisted:**
-- Compared against USPTO ID Manual standards
-- Risk based on clarity, specificity, and use of accepted terminology
+Only ~35% of marks reach the LLM. Each is analyzed individually with:
+- **Structured JSON output**: `is_similar`, `risk_level`, `reasoning`, `key_factor`, `tmep_section`
+- **Focused TMEP context**: Only relevant sections injected (~200-500 tokens)
+- **Sequential execution**: One mark per call with 3.5-7s delay between calls
+- **Retry logic**: Exponential backoff for rate limits (5s → 10s → 20s → 40s)
 
 ## Risk Dimension Weights
 
@@ -79,56 +84,55 @@ The overall risk score is a weighted average of 4 dimensions:
 
 | Dimension | Weight | What It Measures |
 |-----------|--------|-----------------|
-| Rejection Likelihood | 40% | Probability of examiner refusal |
-| Overcoming Difficulty | 25% | Cost/effort to overcome issues |
-| Legal Precedent | 20% | Strength of established case law |
-| Examiner Discretion | 15% | Role of subjective judgment |
+| **Rejection Likelihood** | 40% | Probability of examiner refusal |
+| **Overcoming Difficulty** | 30% | Cost/effort to overcome issues |
+| **Legal Precedent** | 20% | Strength of established case law |
+| **Examiner Discretion** | 10% | Role of subjective judgment |
+
+## Issue Analysis Framework
+
+### 1. Likelihood of Confusion (TMEP §1207) — Most Critical
+All 13 DuPont factors covered:
+1. Mark similarity (sight, sound, meaning, commercial impression)
+2. Goods/services relatedness
+3. Trade channels
+4. Consumer sophistication
+5. Fame of prior mark
+6. Number and nature of similar marks
+7. Nature and extent of actual confusion
+8-13. Additional factors (survey evidence, intent, etc.)
+
+### 2. Descriptiveness (TMEP §1209)
+**Abercrombie Spectrum**: Generic → Descriptive → Suggestive → Arbitrary → Fanciful
+
+Pre-check: **Fanciful Detection** — if mark has no recognizable English words, automatically classified as Fanciful (LOW risk), bypassing LLM.
+
+### 3. Specimen Requirements (TMEP §904)
+Checks if mark functions as source identifier vs. mere slogan/ornamentation.
+
+### 4. Filing Basis (TMEP §806)
+Evaluates ITU vs. use-in-commerce strategy and multi-class filing risks.
+
+### 5. Identification of Goods/Services (TMEP §1402)
+Validates goods description against USPTO ID Manual standards.
 
 ## Confidence Scoring
 
-Each assessment includes a confidence score (0-100%):
-
 | Confidence | Meaning | Action |
 |-----------|---------|--------|
-| 85-100% | High certainty — deterministic rule applied | Trust the assessment |
-| 60-84% | Moderate certainty — LLM analysis with good context | Review reasoning |
-| 40-59% | Low certainty — limited context or LLM uncertainty | Human review required |
-| 0-39% | Very low — LLM failed or insufficient data | Manual assessment needed |
+| 85-100% | High certainty — deterministic rule | Trust the assessment |
+| 60-84% | LLM analysis with good context | Review reasoning |
+| 40-59% | Limited context or LLM uncertainty | Human review required |
+| 0-39% | LLM failed or data insufficient | Manual assessment needed |
 
-**Human Review Triggers:**
-- Confidence < 60%
-- Conflicting signals between dimensions
-- Any invalid citations detected (hallucination flagged)
-
-## Anti-Hallucination Methodology
-
-### What We Validate vs. What We Accept from LLMs
+## Anti-Hallucination Validation
 
 | Component | Source | Validation |
 |-----------|--------|-----------|
-| TMEP section text | Hardcoded (20 sections) | 100% verified — no retrieval errors |
-| TMEP citations | Validated against known 20 sections | Rejected if not in our knowledge base |
-| Risk categories | Deterministic rules + LLM | LLM output parsed and constrained |
-| Name containment | Deterministic string matching | No LLM involved |
+| TMEP section text | Hardcoded (26 sections) | 100% verified — zero retrieval errors |
+| TMEP citations | Validated against 26 known sections | Unknown citations flagged with ⚠️ |
+| Risk categories | Tier 2 rules + LLM | LLM constrained to JSON schema |
+| Name containment | Deterministic substring matching | No LLM involved |
 | Class overlap | Deterministic set intersection | No LLM involved |
-| Similarity assessment | LLM (structured output) | Constrained to YES/NO format |
-| Reasoning text | LLM | Displayed as-is for attorney review |
-
-### The 6 Layers of Anti-Hallucination Defense
-
-This system is built to minimize LLM hallucinations through a strict "defense-in-depth" architecture:
-
-1. **Pre-loaded Knowledge Base (Static)**: The LLM is never asked to recall law from its weights. 20 highly relevant TMEP sections are hardcoded into the system and injected directly into the prompt.
-2. **Per-Mark Isolation**: Prior marks are analyzed individually (one per LLM call) rather than collectively. This strictly prevents cross-contamination and "overfeeding" the context window.
-3. **Deterministic Scoring & Overrides**: The LLM only generates reasoning text. Risk scores and timelines are calculated by deterministic Python code (`risk_framework.py`). Critical risks (like exact name matches) and Fanciful marks (no English words) trigger deterministic overrides that bypass LLM judgment entirely.
-4. **Fanciful Mark Detection**: A pre-check scans marks against a dictionary of 150+ common English words. Marks with no recognizable words are automatically classified as Fanciful (LOW risk), entirely preventing the LLM from hallucinating meaningless vitality/energy concepts for random strings. 
-5. **Classification-Risk Consistency Checks**: The system parses the LLM's structured output and checks for logical contradictions. If the LLM classifies a mark as `SUGGESTIVE` but assigns a `HIGH` risk, the system overrides the risk to `LOW` and lowers confidence to flag it for human review.
-6. **Citation Validation Regex**: Before reasoning text is displayed, an automated regex scanner identifies any TMEP sections the LLM cited (e.g., `§ 1209.04(b)`). It checks these against the known 20 sections. Any hallucinated sections append an automated `[⚠️ WARNING]` to the reasoning text.
-
-## How an Attorney Verifies the Assessment
-
-1. **Per-mark breakdown**: Each prior mark shown with individual risk assessment
-2. **Exact TMEP text**: Citation text shown for each finding — attorney can verify
-3. **Confidence scores**: Low-confidence assessments flagged for human review
-4. **Expandable reasoning**: Click any prior mark to see full LLM reasoning
-5. **Deterministic flags**: "NAME CONTAINED" badge shows when string matching applies
+| Similarity scores | ML models (Tier 1) | No LLM involved |
+| Reasoning text | LLM or template (DROP_HIGH) | Displayed for attorney review |

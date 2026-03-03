@@ -1,6 +1,6 @@
 """
 Trademark Risk Assessment API
-FastAPI backend using Focused Analyzer (anti-hallucination architecture)
+FastAPI backend — 3-Tier Architecture (ML Similarity → Deterministic → LLM)
 
 Endpoints:
 - POST /api/analyze      - Analyze trademark (manual input)
@@ -29,8 +29,8 @@ from tmep_knowledge import TMEP_SECTIONS, get_section
 
 app = FastAPI(
     title="Trademark Risk Assessment API",
-    description="AI-powered trademark risk analysis — anti-hallucination architecture with per-mark analysis",
-    version="2.0.0",
+    description="AI-powered trademark risk analysis — 3-Tier Architecture with per-mark analysis and DuPont 13 factor coverage",
+    version="3.0.0",
 )
 
 # CORS middleware for frontend
@@ -42,7 +42,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize components (NO vector DB, NO FAISS, NO sentence-transformers)
+# Initialize components (Tier 1: sentence-transformers, Tier 2: deterministic, Tier 3: Gemini LLM)
 risk_framework = RiskFramework()
 analyzer = FocusedAnalyzer()
 document_parser = DocumentParser()
@@ -75,6 +75,9 @@ class MarkComparisonResponse(BaseModel):
     citation_text: str
     confidence: float
     name_contained: bool
+    # 3-Tier Architecture metadata
+    tier_resolved: str = ""         # "tier1_2" or "tier3"
+    similarity_scores: Optional[Dict] = None  # Raw ML scores from Tier 1
 
 
 class IssueResponse(BaseModel):
@@ -125,7 +128,7 @@ class AnalysisResponse(BaseModel):
     trademark: str
     goods_services: str
 
-    # NEW: per-mark breakdown (the anti-hallucination feature)
+    # NEW: per-mark breakdown (3-tier pipeline output)
     per_mark_results: List[MarkComparisonResponse]
     overall_confusion_risk: str
     highest_risk_mark: Optional[str]
@@ -170,6 +173,10 @@ def _issue_category_from_type(issue_type: str) -> IssueCategory:
         "filing_basis_issue": IssueCategory.BASIS_ISSUE,
         "identification_issue": IssueCategory.IDENTIFICATION_ISSUE,
         "likelihood_of_confusion": IssueCategory.LIKELIHOOD_CONFUSION,
+        "genericness": IssueCategory.GENERICNESS,
+        "deceptiveness": IssueCategory.PROCEDURAL,  # No dedicated enum — closest match
+        "ownership_issue": IssueCategory.OWNERSHIP_ISSUE,
+        "dilution": IssueCategory.LIKELIHOOD_CONFUSION,  # Dilution is related to confusion
     }
     return mapping.get(issue_type, IssueCategory.PROCEDURAL)
 
@@ -248,6 +255,8 @@ def _mark_result_to_response(r: MarkComparisonResult) -> MarkComparisonResponse:
         citation_text=r.citation_text,
         confidence=r.confidence,
         name_contained=r.name_contained,
+        tier_resolved=r.tier_resolved,
+        similarity_scores=r.similarity_scores,
     )
 
 
@@ -271,7 +280,7 @@ async def _run_analysis_pipeline(
     4. Generate recommendations
     """
 
-    # Step 1: Focused analysis (per-mark, anti-hallucination)
+    # Step 1: Focused analysis (3-tier pipeline: ML → Deterministic → LLM)
     print(f"📋 Running focused analysis for: {mark}")
     full_result: FullAnalysisResult = await analyzer.run_full_analysis(
         mark=mark,
@@ -357,7 +366,9 @@ async def _run_analysis_pipeline(
     for pm in (prior_marks or []):
         pm_copy = dict(pm)
         pm_name = (pm_copy.get("name") or pm_copy.get("mark") or "").lower().strip()
-        pm_copy["name_contained"] = bool(pm_name and (pm_name in mark.lower().strip() or mark.lower().strip() in pm_name))
+        pm_name_norm = pm_name.replace(" ", "")
+        mark_norm = mark.lower().strip().replace(" ", "")
+        pm_copy["name_contained"] = bool(pm_name_norm and (pm_name_norm in mark_norm or mark_norm in pm_name_norm))
         enriched_prior_marks.append(pm_copy)
 
     rejection = risk_framework.assess_rejection_likelihood(
@@ -448,8 +459,8 @@ async def _run_analysis_pipeline(
 async def root():
     return {
         "service": "Trademark Risk Assessment API",
-        "version": "2.0.0",
-        "architecture": "Focused Analysis (anti-hallucination)",
+        "version": "3.0.0",
+        "architecture": "3-Tier (ML Similarity → Deterministic → LLM)",
         "status": "operational",
     }
 
@@ -458,10 +469,16 @@ async def root():
 async def health_check():
     return {
         "status": "healthy",
-        "version": "2.0.0",
-        "architecture": "focused_analysis",
+        "version": "3.0.0",
+        "architecture": "3-tier",
+        "tiers": {
+            "tier1": "ML Probabilistic (phonetic/semantic/visual via sentence-transformers)",
+            "tier2": "Deterministic Screening (rule-based pass/fail)",
+            "tier3": "LLM Analysis (Gemini — nuanced judgment)",
+        },
         "components": {
-            "focused_analyzer": "operational",
+            "similarity_engine": "operational (Tier 1 + 2)",
+            "focused_analyzer": "operational (Tier 3 + orchestration)",
             "risk_framework": "operational",
             "document_parser": "operational",
             "tmep_knowledge": f"{len(TMEP_SECTIONS)} sections loaded",
@@ -479,11 +496,11 @@ async def analyze_trademark(request: AnalyzeRequest):
     """
     Analyze trademark application for registration risks.
 
-    Anti-hallucination architecture:
-    1. Each prior mark analyzed INDIVIDUALLY
-    2. LLM sees only focused TMEP context (~200-500 tokens)
-    3. Citations validated against 20 known TMEP sections
-    4. Deterministic overrides for clear-cut cases
+    3-Tier Architecture:
+    1. Tier 1: ML similarity (phonetic/semantic/visual) screens all prior marks
+    2. Tier 2: Deterministic rules filter clear-cut cases (no LLM needed)
+    3. Tier 3: Gemini LLM for ambiguous marks (~200-500 tokens context)
+    4. Citations validated against 26 known TMEP sections (all 13 DuPont factors)
     """
     result = await _run_analysis_pipeline(
         mark=request.mark,
@@ -543,7 +560,7 @@ async def analyze_pdf(file: UploadFile = File(...)):
 
     This endpoint:
     1. Parses the PDF to extract mark, goods/services, classes, prior marks
-    2. Runs per-mark focused analysis (anti-hallucination)
+    2. Runs 3-tier analysis (ML similarity → deterministic screening → Gemini LLM)
     3. Returns analysis results + parsed PDF metadata
     """
     if not file.filename.endswith(".pdf"):
@@ -629,8 +646,9 @@ async def analyze_pdf(file: UploadFile = File(...)):
 if __name__ == "__main__":
     import uvicorn
 
-    print("🚀 Starting Trademark Risk Assessment API v2.0...")
+    print("🚀 Starting Trademark Risk Assessment API v3.0...")
     print("📍 Server: http://localhost:8000")
     print("📚 Docs: http://localhost:8000/docs")
-    print("🛡️  Architecture: Focused Analysis (anti-hallucination)")
+    print("🛡️  Architecture: 3-Tier (ML → Deterministic → LLM)")
+    print(f"📚 TMEP Knowledge: 26 sections covering all 13 DuPont factors")
     uvicorn.run(app, host="0.0.0.0", port=8000)

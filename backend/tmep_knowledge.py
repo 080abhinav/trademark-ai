@@ -1,10 +1,10 @@
 """
 TMEP Knowledge Base — Hardcoded Expert Knowledge
 =================================================
-20 critical TMEP sections that cover >95% of trademark examination issues.
+26 critical TMEP sections covering ALL 13 DuPont factors and key examination issues.
 
 WHY HARDCODED (not RAG):
-- Only ~20 sections matter for typical trademark analysis
+- Only ~26 sections matter for typical trademark analysis
 - Hardcoded = ZERO hallucination risk (LLM only sees exact TMEP text we provide)
 - No vector DB, no embedding model, no retrieval errors
 - Each section is curated with key rules, risk guidance, and exact citation text
@@ -193,6 +193,147 @@ TMEP_SECTIONS: Dict[str, dict] = {
         "citation_text": "In a composite mark, the dominant portion is given greater weight. Adding a generic or descriptive term to a registered mark does not obviate the likelihood of confusion. TMEP §1207.01(d).",
         "category": "likelihood_of_confusion",
         "related": ["1207.01", "1207.01(b)(i)"]
+    },
+
+    "1207.01(b)(iii)": {
+        "section": "1207.01(b)(iii)",
+        "title": "Similarity of Trade Channels — DuPont Factor 3",
+        "summary": "If the goods travel through the same trade channels (same stores, same websites, same distribution networks), confusion is more likely. This factor also covers DuPont Factor 10 (market interface between applicant and registrant).",
+        "key_rules": [
+            "If the goods of both parties are sold in the same retail outlets, trade channels, or online marketplaces, confusion is more likely.",
+            "Identical trade channels significantly increase the likelihood of confusion, even if the goods themselves differ somewhat.",
+            "Class 5 (supplements) and Class 32 (beverages) are commonly sold through the SAME channels: grocery stores, health food stores, convenience stores, Amazon, GNC.",
+            "Online sales broaden trade channels — products from different categories are often displayed on the same pages or in the same search results.",
+            "If the applicant's and registrant's goods target the same consumers through the same distribution methods, this factor weighs against the applicant.",
+            "Trade channel analysis considers WHERE the goods are sold, not just what they are.",
+            "Even if the applicant intends different channels, the registration covers all normal trade channels for the identified goods."
+        ],
+        "risk_guidance": {
+            "HIGH": "Goods sold through identical trade channels (same stores, same websites, same shelf space)",
+            "MEDIUM": "Some overlap in trade channels but primarily different distribution methods",
+            "LOW": "Completely different trade channels with no overlap (e.g., industrial vs. consumer retail)"
+        },
+        "citation_text": "The similarity or dissimilarity of established, likely-to-continue trade channels is a factor in the likelihood of confusion analysis. In re Viterra Inc., 671 F.3d 1358, 101 USPQ2d 1905 (Fed. Cir. 2012); TMEP §1207.01(b)(iii).",
+        "category": "likelihood_of_confusion",
+        "related": ["1207.01(b)", "1207.01(b)(ii)"]
+    },
+
+    "1207.01(b)(iv)": {
+        "section": "1207.01(b)(iv)",
+        "title": "Conditions of Purchase — Buyer Sophistication (DuPont Factor 4)",
+        "summary": "The sophistication and care exercised by the typical buyer affects the likelihood of confusion. Impulse purchases of inexpensive goods increase confusion risk; careful, expensive purchases by sophisticated buyers decrease it.",
+        "key_rules": [
+            "Inexpensive, frequently purchased goods (e.g., beverages, snacks) are bought with LESS CARE — confusion is MORE likely.",
+            "Expensive, specialized goods (e.g., industrial equipment, luxury goods) are bought with MORE CARE — confusion is LESS likely.",
+            "Energy drinks, supplements, and beverages are LOW-COST impulse purchases — the relevant consumer exercises minimal care.",
+            "The standard is the LEAST SOPHISTICATED consumer in the relevant market, not the most sophisticated.",
+            "Where goods are inexpensive, even minor similarities may cause confusion because consumers spend less time evaluating.",
+            "Professional buyers in B2B contexts exercise greater care and are less likely to be confused.",
+            "The conditions of purchase must be evaluated for the applicant's specific goods/services."
+        ],
+        "risk_guidance": {
+            "HIGH": "Low-cost impulse purchases (beverages, food, basic consumer goods) — consumers exercise minimal care",
+            "MEDIUM": "Moderate-cost items where consumers exercise some but not extensive care",
+            "LOW": "Expensive, specialized goods purchased by sophisticated/professional buyers with extensive evaluation"
+        },
+        "citation_text": "Because the goods are relatively low-cost consumer items, purchasers are held to a lesser standard of purchasing care. In re Majestic Distilling Co., 315 F.3d 1311, 65 USPQ2d 1201 (Fed. Cir. 2003); TMEP §1207.01(b)(iv).",
+        "category": "likelihood_of_confusion",
+        "related": ["1207.01(b)", "1207.01(b)(ii)"]
+    },
+
+    "1207.01(b)(v)": {
+        "section": "1207.01(b)(v)",
+        "title": "Actual Confusion and Concurrent Use — DuPont Factors 7 & 8",
+        "summary": "Evidence of actual confusion is strong proof of likelihood of confusion, but is NOT required. Conversely, a long period of concurrent use without confusion may weigh against a finding, but does not guarantee no confusion.",
+        "key_rules": [
+            "Actual confusion evidence is the BEST evidence of likelihood of confusion, but it is NOT required.",
+            "Even a single instance of actual confusion can be significant if it is probative.",
+            "The ABSENCE of actual confusion evidence does not mean confusion is unlikely — it may simply mean no evidence has been discovered.",
+            "Length of concurrent use without confusion can weigh in the applicant's favor, but ONLY IF the use was under conditions where confusion would have been detected.",
+            "Short periods of concurrent use (less than a few years) carry little weight.",
+            "If the marks have never actually been used concurrently in the marketplace, this factor is neutral.",
+            "In ex parte examination, the examiner typically does not have access to actual confusion evidence — the analysis focuses on LIKELIHOOD, not actual instances."
+        ],
+        "risk_guidance": {
+            "HIGH": "Evidence of actual confusion exists (customer complaints, misdirected communications, survey data)",
+            "MEDIUM": "No evidence either way — factor is neutral (typical in examination)",
+            "LOW": "Documented concurrent use for 5+ years without any reported confusion"
+        },
+        "citation_text": "Evidence of actual confusion is not necessary to find likelihood of confusion; likelihood of confusion is the statutory test. Giant Food, Inc. v. Nation's Foodservice, Inc., 710 F.2d 1565, 218 USPQ 390 (Fed. Cir. 1983); TMEP §1207.01(b)(v).",
+        "category": "likelihood_of_confusion",
+        "related": ["1207.01(b)", "1207.01"]
+    },
+
+    "1207.01(b)(vi)": {
+        "section": "1207.01(b)(vi)",
+        "title": "Doctrine of Foreign Equivalents",
+        "summary": "Under the doctrine of foreign equivalents, foreign words are translated into English to determine similarity. If the foreign word is the equivalent of the English mark (or vice versa), the marks may be found confusingly similar.",
+        "key_rules": [
+            "Foreign words from common languages are translated into their English equivalents for comparison.",
+            "The doctrine applies when the ordinary American purchaser would stop and translate the foreign term.",
+            "Common languages (Spanish, French, German, Italian, etc.) are presumed to be understood by a significant portion of US consumers.",
+            "Obscure or dead languages may not trigger the doctrine — the relevant consumer must be likely to translate.",
+            "Example: 'LUPO' (Italian for wolf) vs. 'WOLF' — these may be found confusingly similar.",
+            "The doctrine is not applied mechanically — context matters. If the foreign word has a different connotation, it may not apply.",
+            "Marks with high SEMANTIC similarity (meaning-based) across languages should trigger this analysis."
+        ],
+        "risk_guidance": {
+            "HIGH": "Foreign word is a direct translation of the English mark in a common language",
+            "MEDIUM": "Foreign word has a related but not identical meaning to the English mark",
+            "LOW": "Foreign word is from an obscure language or has no meaningful connection"
+        },
+        "citation_text": "Under the doctrine of foreign equivalents, foreign words from common languages are translated into English for purposes of comparison. Palm Bay Imports, Inc. v. Veuve Clicquot Ponsardin Maison Fondee En 1772, 396 F.3d 1369, 73 USPQ2d 1689 (Fed. Cir. 2005); TMEP §1207.01(b)(vi).",
+        "category": "likelihood_of_confusion",
+        "related": ["1207.01(b)", "1207.01(b)(i)"]
+    },
+
+    "1207.01(d)(i)": {
+        "section": "1207.01(d)(i)",
+        "title": "Marks Containing the Entirety of a Prior Mark",
+        "summary": "When an applicant's mark incorporates the entirety of a registered mark, there is a strong presumption of likelihood of confusion, even if additional matter is added. This is one of the strictest rules in trademark examination.",
+        "key_rules": [
+            "Incorporation of the ENTIRE prior mark into the applicant's mark creates a strong presumption of confusion.",
+            "Adding descriptive or generic words to the prior mark generally does NOT avoid confusion.",
+            "Adding additional distinctive matter may help, but the burden is on the applicant to overcome the presumption.",
+            "Example: 'LIVEMORE' registered → 'TEAR POUR LIVE MORE' likely confusing because LIVEMORE is entirely contained.",
+            "This applies to both literal containment AND phonetic equivalents (e.g., LIVE MORE = LIVEMORE).",
+            "The prior mark's entire presence as a component of the new mark is a critical negative factor.",
+            "Even if the composite mark has a different overall commercial impression, containment alone creates significant risk."
+        ],
+        "risk_guidance": {
+            "HIGH": "Applicant's mark contains the entire prior mark — regardless of what else is added",
+            "MEDIUM": "Applicant's mark contains a substantial portion but not the entirety of the prior mark",
+            "LOW": "Only a minor, non-dominant element is shared between the marks"
+        },
+        "citation_text": "A mark that incorporates another mark in its entirety creates a strong likelihood of confusion. In re Mighty Leaf Tea, 601 F.3d 1342, 94 USPQ2d 1257 (Fed. Cir. 2010); TMEP §1207.01(d)(i).",
+        "category": "likelihood_of_confusion",
+        "related": ["1207.01(d)", "1207.01(b)(i)"]
+    },
+
+    # ===== DILUTION (§1208) =====
+
+    "1208": {
+        "section": "1208",
+        "title": "Dilution Protection for Famous Marks — Trademark Act §43(c)",
+        "summary": "Famous marks are protected against dilution even in the ABSENCE of likelihood of confusion. Dilution can occur by blurring (impairing distinctiveness) or tarnishment (harming reputation). This goes beyond the §2(d) confusion analysis.",
+        "key_rules": [
+            "Dilution protection applies ONLY to FAMOUS marks — marks widely recognized by the general consuming public of the United States.",
+            "Dilution by BLURRING: Association of the famous mark with a dissimilar mark that impairs the famous mark's distinctiveness.",
+            "Dilution by TARNISHMENT: Association that harms the reputation of the famous mark (e.g., use on inferior or offensive goods).",
+            "Unlike confusion, dilution does NOT require similar goods/services — a famous mark is protected across ALL goods/services.",
+            "Factors for blurring: (1) degree of similarity, (2) degree of distinctiveness, (3) extent of exclusive use, (4) degree of recognition, (5) intent to create association, (6) actual association.",
+            "Only a small number of truly famous marks qualify: COCA-COLA, GOOGLE, APPLE, NIKE, etc.",
+            "Niche fame (known only in a specific market) is typically insufficient — the mark must be famous to the general public.",
+            "In USPTO examination, dilution refusals under §43(c) are rare but can be raised when a clearly famous mark is involved."
+        ],
+        "risk_guidance": {
+            "HIGH": "Prior mark is a household name (nationally famous) and applicant's mark is very similar — dilution risk exists regardless of goods",
+            "MEDIUM": "Prior mark has significant but not universal fame — dilution claim is possible but not certain",
+            "LOW": "Prior mark is not famous enough for dilution protection, or the marks are sufficiently different"
+        },
+        "citation_text": "The owner of a famous mark is entitled to an injunction against another person who commences use of a mark that is likely to cause dilution by blurring or tarnishment. Trademark Act §43(c), 15 U.S.C. §1125(c); TMEP §1208.",
+        "category": "dilution",
+        "related": ["1207.01(b)(vii)", "1207.01"]
     },
 
     # ===== DESCRIPTIVENESS / DISTINCTIVENESS (§1209) =====
