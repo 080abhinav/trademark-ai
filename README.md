@@ -30,15 +30,10 @@ Tier 1 (ML)  →  Tier 2 (Rules)  →  Tier 3 (LLM)
 
 ## Screenshots
 
-<div align="center">
-  <img src="docs/images/img1.png" alt="Dashboard Overview" width="48%">
-  <img src="docs/images/img2.png" alt="Per-Mark Analysis" width="48%">
-</div>
-<br>
-<div align="center">
-  <img src="docs/images/img3.png" alt="Risk Dimensions Breakdown" width="48%">
+  <img src="docs/images/img1.png" alt="Dashboard Overview" width="48%"><br>
+  <img src="docs/images/img2.png" alt="Per-Mark Analysis" width="48%"><br>
+  <img src="docs/images/img3.png" alt="Risk Dimensions Breakdown" width="48%"><br>
   <img src="docs/images/img4.png" alt="Detailed Issue Findings" width="48%">
-</div>
 
 ## Setup Instructions
 
