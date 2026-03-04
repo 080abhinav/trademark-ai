@@ -6,3 +6,4 @@ numpy==2.3.0
 jellyfish==1.2.0
 sentence-transformers==4.1.0
 torch==2.7.1
+google-genai==1.65.0
